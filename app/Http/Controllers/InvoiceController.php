@@ -32,7 +32,7 @@ class InvoiceController extends Controller
         }
 
         $invoices = $query->latest()->paginate(20)->withQueryString();
-        $pelanggans = Pelanggan::orderBy('nama')->get();
+        $pelanggans = Pelanggan::with('paket')->orderBy('nama')->get();
 
         return view('invoice.index', compact('invoices', 'pelanggans'));
     }

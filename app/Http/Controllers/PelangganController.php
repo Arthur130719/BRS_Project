@@ -65,6 +65,8 @@ class PelangganController extends Controller
             'nama'           => 'required|max:200',
             'phone'          => 'nullable|max:20',
             'alamat'         => 'nullable|max:500',
+            'latitude'       => 'nullable|numeric|between:-90,90',
+            'longitude'      => 'nullable|numeric|between:-180,180',
             'paket_id'       => 'required|exists:pakets,id',
             'nas_id'         => 'nullable|exists:nas,id',
             'olt_id'         => 'nullable|exists:olts,id',
@@ -115,6 +117,8 @@ class PelangganController extends Controller
             'nama'           => 'required|max:200',
             'phone'          => 'nullable|max:20',
             'alamat'         => 'nullable|max:500',
+            'latitude'       => 'nullable|numeric|between:-90,90',
+            'longitude'      => 'nullable|numeric|between:-180,180',
             'paket_id'       => 'required|exists:pakets,id',
             'nas_id'         => 'nullable|exists:nas,id',
             'olt_id'         => 'nullable|exists:olts,id',
@@ -150,6 +154,22 @@ class PelangganController extends Controller
             'isolir_by' => 'manual:' . auth()->id(),
             'isolir_at' => now(),
         ]);
+
+        $hasUnpaid = \App\Models\Invoice::where('pelanggan_id', $pelanggan->id)
+            ->where('status', 'unpaid')
+            ->exists();
+
+        if (!$hasUnpaid && $pelanggan->paket) {
+            \App\Models\Invoice::create([
+                'pelanggan_id'    => $pelanggan->id,
+                'no_invoice'      => \App\Models\Invoice::generateNoInvoice(),
+                'periode'         => \Carbon\Carbon::now()->translatedFormat('F Y'),
+                'nominal'         => $pelanggan->paket->harga,
+                'tgl_jatuh_tempo' => now()->addDays(7)->format('Y-m-d'),
+                'keterangan'      => 'Tagihan otomatis (Suspend Manual)',
+                'status'          => 'unpaid',
+            ]);
+        }
 
         IsolirLog::create([
             'pelanggan_id' => $pelanggan->id,

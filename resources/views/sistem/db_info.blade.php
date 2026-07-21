@@ -157,7 +157,7 @@
 <div class="page-header">
     <div class="page-header-title">
         <h1><i class="fas fa-database" style="color:var(--amber);margin-right:8px;"></i>Informasi Basis Data</h1>
-        <p>Arsitektur sistem basis data terdistribusi NetCORE</p>
+        <p>Arsitektur sistem basis data terdistribusi BRS</p>
     </div>
     <div class="page-header-actions">
         <span class="badge badge-auto" style="padding:5px 12px;font-size:12px;">
@@ -182,7 +182,7 @@
     <div class="card-header">
         <div>
             <div class="card-title"><i class="fas fa-sitemap" style="color:var(--indigo);margin-right:6px;"></i>Arsitektur Sistem Terdistribusi</div>
-            <div class="card-subtitle">Topologi container NetCORE ISP Management</div>
+            <div class="card-subtitle">Topologi container BRS ISP Management</div>
         </div>
     </div>
     <div class="card-body">

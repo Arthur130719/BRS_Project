@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PelangganController;
 use App\Http\Controllers\RadiusController;
 use App\Http\Controllers\OltController;
+use App\Http\Controllers\TicketController;
 use App\Http\Controllers\NasController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PembayaranController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\PaketController;
 use App\Http\Controllers\PengaturanController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes (Breeze)
@@ -27,16 +29,33 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard (all roles)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Global Search (all roles)
+    Route::get('/search/live', [SearchController::class, 'live'])->name('search.live');
+    Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+    // Company Profile (all roles)
+    Route::view('/company', 'company.profile')->name('company.profile');
+
     // ── Pelanggan (Admin: full CRUD | Kasir: full CRUD | Teknisi: read)
     Route::resource('pelanggan', PelangganController::class);
     Route::post('/pelanggan/{id}/suspend', [PelangganController::class, 'suspend'])->name('pelanggan.suspend');
     Route::post('/pelanggan/{id}/aktifkan', [PelangganController::class, 'aktifkan'])->name('pelanggan.aktifkan');
+
+    // ── Permohonan (Admin + Kasir)
+    Route::middleware('role:admin,kasir')->group(function () {
+        Route::get('/permohonan', [\App\Http\Controllers\PermohonanController::class, 'index'])->name('permohonan.index');
+        Route::post('/permohonan/{permohonan}/accept', [\App\Http\Controllers\PermohonanController::class, 'accept'])->name('permohonan.accept');
+        Route::post('/permohonan/{permohonan}/reject', [\App\Http\Controllers\PermohonanController::class, 'reject'])->name('permohonan.reject');
+    });
 
     // ── RADIUS (Admin + Teknisi)
     Route::middleware('role:admin,teknisi')->group(function () {
         Route::get('/radius', [RadiusController::class, 'index'])->name('radius.index');
         Route::post('/radius/{id}/disconnect', [RadiusController::class, 'disconnect'])->name('radius.disconnect');
     });
+
+    // ── Ticketing (All Roles)
+    Route::resource('tickets', TicketController::class);
 
     // ── OLT & ONU (Admin + Teknisi)
     Route::middleware('role:admin,teknisi')->group(function () {
@@ -79,8 +98,14 @@ Route::middleware(['auth'])->group(function () {
     // ── Bantuan / Panduan (all roles)
     Route::get('/bantuan', fn() => view('bantuan.index'))->name('bantuan.index');
 
-    // ── Admin only routes
-    Route::middleware('role:admin')->group(function () {
+    // Support Tickets (Aduan Pelanggan) - Admin & Kasir
+    Route::middleware([\App\Http\Middleware\RoleMiddleware::class.':admin,kasir'])->group(function () {
+        Route::get('/support-tickets', [\App\Http\Controllers\SupportTicketController::class, 'index'])->name('support-tickets.index');
+        Route::post('/support-tickets/{id}/status', [\App\Http\Controllers\SupportTicketController::class, 'updateStatus'])->name('support-tickets.status');
+    });
+
+    // Pengaturan System
+    Route::middleware([\App\Http\Middleware\RoleMiddleware::class.':admin'])->group(function () {
         Route::resource('pengguna', PenggunaController::class);
         Route::resource('paket', PaketController::class);
         Route::get('/pengaturan',          [PengaturanController::class, 'index'])->name('pengaturan.index');

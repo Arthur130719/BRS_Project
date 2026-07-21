@@ -98,6 +98,18 @@
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label class="form-label">Latitude</label>
+            <input type="text" name="latitude" class="form-control" value="{{ old('latitude', $pelanggan->latitude) }}" placeholder="-6.12345678">
+            @error('latitude')<div class="form-error">{{ $message }}</div>@enderror
+          </div>
+          <div class="form-group">
+            <label class="form-label">Longitude</label>
+            <input type="text" name="longitude" class="form-control" value="{{ old('longitude', $pelanggan->longitude) }}" placeholder="106.12345678">
+            @error('longitude')<div class="form-error">{{ $message }}</div>@enderror
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
             <label class="form-label">Tanggal Aktif</label>
             <input type="date" name="tgl_aktif" class="form-control"
                    value="{{ old('tgl_aktif', $pelanggan->tgl_aktif?->format('Y-m-d')) }}">

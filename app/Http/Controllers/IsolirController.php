@@ -21,6 +21,22 @@ class IsolirController extends Controller
             'isolir_at' => now(),
         ]);
 
+        $hasUnpaid = \App\Models\Invoice::where('pelanggan_id', $pelanggan->id)
+            ->where('status', 'unpaid')
+            ->exists();
+
+        if (!$hasUnpaid && $pelanggan->paket) {
+            \App\Models\Invoice::create([
+                'pelanggan_id'    => $pelanggan->id,
+                'no_invoice'      => \App\Models\Invoice::generateNoInvoice(),
+                'periode'         => \Carbon\Carbon::now()->translatedFormat('F Y'),
+                'nominal'         => $pelanggan->paket->harga,
+                'tgl_jatuh_tempo' => now()->addDays(7)->format('Y-m-d'),
+                'keterangan'      => 'Tagihan otomatis (Isolir Manual)',
+                'status'          => 'unpaid',
+            ]);
+        }
+
         IsolirLog::create([
             'pelanggan_id' => $pelanggan->id,
             'aksi'         => 'isolir',

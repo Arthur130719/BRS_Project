@@ -33,7 +33,7 @@
       @if($invoice->status === 'paid')
         <span class="badge badge-paid">LUNAS</span>
       @elseif($invoice->status === 'unpaid')
-        <span class="badge badge-unpaid">BELUM BAYAR</span>
+        <span class="badge badge-unpaid">BELUM LUNAS</span>
       @else
         <span class="badge badge-partial">PARSIAL</span>
       @endif

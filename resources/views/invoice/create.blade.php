@@ -24,11 +24,11 @@
         @csrf
         <div class="form-group">
           <label class="form-label">Pelanggan <span style="color:var(--red)">*</span></label>
-          <select name="pelanggan_id" class="form-control" required>
-            <option value="">— Pilih Pelanggan —</option>
+          <select name="pelanggan_id" class="form-control" required onchange="document.getElementById('nominal_input_create').value = this.options[this.selectedIndex].getAttribute('data-harga') || '';">
+            <option value="" data-harga="">— Pilih Pelanggan —</option>
             @foreach($pelanggans as $p)
-              <option value="{{ $p->id }}" {{ old('pelanggan_id') == $p->id ? 'selected' : '' }}>
-                {{ $p->nama }} — {{ $p->username_pppoe }} ({{ $p->paket?->nama ?? '-' }})
+              <option value="{{ $p->id }}" data-harga="{{ $p->paket->harga ?? 0 }}" {{ old('pelanggan_id') == $p->id ? 'selected' : '' }}>
+                {{ $p->nama }} — {{ $p->username_pppoe }} (Rp {{ number_format($p->paket->harga ?? 0, 0, ',', '.') }})
               </option>
             @endforeach
           </select>
@@ -45,7 +45,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Nominal (Rp) <span style="color:var(--red)">*</span></label>
-            <input type="number" name="nominal" class="form-control form-control-mono"
+            <input type="number" id="nominal_input_create" name="nominal" class="form-control form-control-mono"
                    value="{{ old('nominal') }}" required min="0" placeholder="200000">
             @error('nominal')<div class="form-error">{{ $message }}</div>@enderror
           </div>

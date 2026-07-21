@@ -64,6 +64,46 @@ return [
             ]) : [],
         ],
 
+        'mysql_cabang_a' => [
+            'driver' => 'mysql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST_CABANG_A', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_PORT_CABANG_A', env('DB_PORT', '3306')),
+            'database' => env('DB_DATABASE_CABANG_A', 'netcore_cabang_a'),
+            'username' => env('DB_USERNAME_CABANG_A', env('DB_USERNAME', 'root')),
+            'password' => env('DB_PASSWORD_CABANG_A', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'mysql_cabang_b' => [
+            'driver' => 'mysql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST_CABANG_B', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_PORT_CABANG_B', env('DB_PORT', '3306')),
+            'database' => env('DB_DATABASE_CABANG_B', 'netcore_cabang_b'),
+            'username' => env('DB_USERNAME_CABANG_B', env('DB_USERNAME', 'root')),
+            'password' => env('DB_PASSWORD_CABANG_B', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

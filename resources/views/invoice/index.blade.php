@@ -52,11 +52,11 @@
 
                         <div class="form-group">
                             <label class="form-label">Pelanggan <span style="color:var(--red);">*</span></label>
-                            <select name="pelanggan_id" class="form-control" required>
-                                <option value="">— Pilih Pelanggan —</option>
-                                @foreach($pelangganList ?? [] as $p)
-                                    <option value="{{ $p->id }}" {{ old('pelanggan_id') == $p->id ? 'selected' : '' }}>
-                                        {{ $p->nama }} — {{ $p->username_pppoe }}
+                            <select name="pelanggan_id" class="form-control" required onchange="document.getElementById('nominal_input').value = this.options[this.selectedIndex].getAttribute('data-harga') || '';">
+                                <option value="" data-harga="">— Pilih Pelanggan —</option>
+                                @foreach($pelanggans ?? [] as $p)
+                                    <option value="{{ $p->id }}" data-harga="{{ $p->paket->harga ?? 0 }}" {{ old('pelanggan_id') == $p->id ? 'selected' : '' }}>
+                                        {{ $p->nama }} — {{ $p->username_pppoe }} (Rp {{ number_format($p->paket->harga ?? 0, 0, ',', '.') }})
                                     </option>
                                 @endforeach
                             </select>
@@ -82,6 +82,7 @@
                             <div class="form-group">
                                 <label class="form-label">Nominal (Rp) <span style="color:var(--red);">*</span></label>
                                 <input type="number"
+                                       id="nominal_input"
                                        name="nominal"
                                        class="form-control form-control-mono"
                                        placeholder="mis. 150000"
@@ -148,7 +149,7 @@
     <div class="stat-card red">
         <div class="stat-icon red"><i class="fas fa-clock"></i></div>
         <div class="stat-value">{{ number_format($countUnpaid) }}</div>
-        <div class="stat-label">Belum Bayar</div>
+        <div class="stat-label">Belum Lunas</div>
         @if($countUnpaid > 0)
         <div class="stat-sub down"><i class="fas fa-triangle-exclamation"></i> Perlu tindakan</div>
         @endif
@@ -180,7 +181,7 @@
                 {{-- Status Filter --}}
                 <select name="status" class="form-control form-control-mono" style="width:140px;height:32px;padding:0 8px;font-size:12px;">
                     <option value="">Semua Status</option>
-                    <option value="unpaid"  {{ request('status') === 'unpaid'  ? 'selected' : '' }}>Belum Bayar</option>
+                    <option value="unpaid"  {{ request('status') === 'unpaid'  ? 'selected' : '' }}>Belum Lunas</option>
                     <option value="paid"    {{ request('status') === 'paid'    ? 'selected' : '' }}>Lunas</option>
                     <option value="partial" {{ request('status') === 'partial' ? 'selected' : '' }}>Sebagian</option>
                 </select>
@@ -262,7 +263,7 @@
                         @elseif($inv->status === 'partial')
                             <span class="badge badge-partial">Sebagian</span>
                         @else
-                            <span class="badge badge-unpaid">Belum Bayar</span>
+                            <span class="badge badge-unpaid">Belum Lunas</span>
                         @endif
                     </td>
                     <td>

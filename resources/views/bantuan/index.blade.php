@@ -168,7 +168,7 @@
 ══════════════════════════════════════════════ --}}
 <div class="page-header">
     <div class="page-header-title">
-        <h1><i class="fas fa-book-open" style="color:var(--indigo);margin-right:8px;"></i>Panduan Pengguna NetCORE</h1>
+        <h1><i class="fas fa-book-open" style="color:var(--indigo);margin-right:8px;"></i>Panduan Pengguna BRS</h1>
         <p>Dokumentasi lengkap fitur dan alur kerja sistem manajemen ISP</p>
     </div>
     <div class="page-header-actions">
@@ -243,6 +243,7 @@
                         <li><i class="fas fa-check" style="color:var(--green);"></i> Kelola paket layanan</li>
                         <li><i class="fas fa-check" style="color:var(--green);"></i> Pengaturan sistem</li>
                         <li><i class="fas fa-check" style="color:var(--green);"></i> Activity log & audit</li>
+                        <li><i class="fas fa-check" style="color:var(--green);"></i> Buat & pantau Job Order (Tiket)</li>
                     </ul>
                 </div>
 
@@ -257,6 +258,7 @@
                         <li><i class="fas fa-check" style="color:var(--green);"></i> Kelola pelanggan</li>
                         <li><i class="fas fa-check" style="color:var(--green);"></i> Invoice & pembayaran</li>
                         <li><i class="fas fa-check" style="color:var(--green);"></i> Notifikasi sistem</li>
+                        <li><i class="fas fa-check" style="color:var(--green);"></i> Buat & pantau Job Order (Tiket)</li>
                         <li><i class="fas fa-times" style="color:var(--red);"></i> Monitor jaringan</li>
                         <li><i class="fas fa-times" style="color:var(--red);"></i> Kelola pengguna</li>
                         <li><i class="fas fa-times" style="color:var(--red);"></i> Pengaturan sistem</li>
@@ -276,6 +278,7 @@
                         <li><i class="fas fa-check" style="color:var(--green);"></i> Monitor RADIUS & OLT</li>
                         <li><i class="fas fa-check" style="color:var(--green);"></i> ONU Reboot</li>
                         <li><i class="fas fa-check" style="color:var(--green);"></i> Notifikasi sistem</li>
+                        <li><i class="fas fa-check" style="color:var(--green);"></i> Ambil & kerjakan Job Order (Tiket)</li>
                         <li><i class="fas fa-times" style="color:var(--red);"></i> Invoice & pembayaran</li>
                         <li><i class="fas fa-times" style="color:var(--red);"></i> Edit pelanggan</li>
                         <li><i class="fas fa-times" style="color:var(--red);"></i> Pengaturan sistem</li>
@@ -374,6 +377,21 @@
 
                 <div class="feature-section">
                     <div class="feature-section-title">
+                        <div class="stat-icon amber" style="width:28px;height:28px;font-size:12px;margin-bottom:0;">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        Job Order (Tiket)
+                    </div>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Buat tiket penugasan (hanya Admin/Kasir)</li>
+                        <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Tentukan lokasi/alamat eksekusi gangguan</li>
+                        <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Tugaskan ke semua teknisi (Bebas) atau spesifik</li>
+                        <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Pantau kinerja teknisi & tab Riwayat Selesai</li>
+                    </ul>
+                </div>
+
+                <div class="feature-section">
+                    <div class="feature-section-title">
                         <div class="stat-icon red" style="width:28px;height:28px;font-size:12px;margin-bottom:0;">
                             <i class="fas fa-cog"></i>
                         </div>
@@ -457,6 +475,20 @@
                     </ul>
                 </div>
 
+                <div class="feature-section">
+                    <div class="feature-section-title">
+                        <div class="stat-icon amber" style="width:28px;height:28px;font-size:12px;margin-bottom:0;">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        Job Order (Tiket)
+                    </div>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Buat tiket penugasan baru</li>
+                        <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Pantau tiket yang Belum Diambil & Sedang Dikerjakan</li>
+                        <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Pantau tab Riwayat Selesai</li>
+                    </ul>
+                </div>
+
                 <div class="feature-section" style="grid-column:1/-1;">
                     <div style="background:var(--amber-d);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius);padding:14px;display:flex;gap:12px;align-items:flex-start;">
                         <i class="fas fa-exclamation-triangle" style="color:var(--amber);margin-top:2px;"></i>
@@ -531,6 +563,21 @@
                         <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Lihat log reboot ONU</li>
                         <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Terima notifikasi sistem</li>
                         <li><i class="fas fa-circle" style="color:var(--amber);font-size:6px;"></i> Alert jaringan bermasalah</li>
+                    </ul>
+                </div>
+
+                <div class="feature-section">
+                    <div class="feature-section-title">
+                        <div class="stat-icon green" style="width:28px;height:28px;font-size:12px;margin-bottom:0;">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        Job Order (Tiket)
+                    </div>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-circle" style="color:var(--green);font-size:6px;"></i> Ambil pekerjaan dari tab "Semua Tersedia"</li>
+                        <li><i class="fas fa-circle" style="color:var(--green);font-size:6px;"></i> Pantau tugas pribadi di tab "Tugas Saya"</li>
+                        <li><i class="fas fa-circle" style="color:var(--green);font-size:6px;"></i> Isi nama Partner & Laporan saat penyelesaian</li>
+                        <li><i class="fas fa-circle" style="color:var(--green);font-size:6px;"></i> Pantau riwayat kerja sendiri di tab "Riwayat Saya"</li>
                     </ul>
                 </div>
 
@@ -683,6 +730,58 @@
         </div>
     </div>
 
+    {{-- Flowchart 3: Job Order / Tiket --}}
+    <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+            <div>
+                <div class="card-title">
+                    <i class="fas fa-tools" style="color:var(--amber);margin-right:6px;"></i>
+                    Alur Kerja Job Order (Tiket)
+                </div>
+                <div class="card-subtitle">Proses penugasan teknisi lapangan</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+
+                <div class="flow-step">
+                    <div class="flow-num" style="background:var(--indigo-dim);border-color:rgba(99,102,241,0.4);color:#a5b4fc;">1</div>
+                    <div class="flow-body">
+                        <div class="flow-body-title">Pembuatan Tiket</div>
+                        <div class="flow-body-desc">Admin/Kasir membuat Job Order baru (Isi alamat, jenis kerjaan). Teknisi <strong>tidak bisa</strong> membuat tiket.</div>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-num" style="background:var(--sky-d);border-color:rgba(14,165,233,0.4);color:#7dd3fc;">2</div>
+                    <div class="flow-body">
+                        <div class="flow-body-title">Distribusi Tiket</div>
+                        <div class="flow-body-desc">Tiket masuk ke papan "Tersedia" jika ditugaskan ke Bebas (Semua Teknisi), atau langsung ke papan "Tugas Saya" teknisi tertentu.</div>
+                    </div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-num" style="background:var(--amber-d);border-color:rgba(245,158,11,0.4);color:#fcd34d;">3</div>
+                    <div class="flow-body">
+                        <div class="flow-body-title">Pengambilan Pekerjaan</div>
+                        <div class="flow-body-desc">Teknisi menekan tombol "Ambil Pekerjaan Ini" via HP mereka. Status berubah menjadi Sedang Dikerjakan.</div>
+                    </div>
+                </div>
+
+                <div class="flow-step" style="margin-bottom:0;">
+                    <div class="flow-num" style="background:var(--green-d);border-color:rgba(16,185,129,0.4);color:#6ee7b7;">4</div>
+                    <div class="flow-body" style="border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.05);">
+                        <div class="flow-body-title" style="color:#6ee7b7;">
+                            <i class="fas fa-check-circle" style="margin-right:5px;"></i>Penyelesaian & Reset
+                        </div>
+                        <div class="flow-body-desc">Teknisi melapor selesai & mengisi nama partner. Tiket pindah ke "Riwayat Selesai" dan akan <strong>dihapus dari papan aktif pada jam 12 malam</strong> setiap harinya.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 </div>
 
 {{-- ══════════════════════════════════════════════
@@ -695,7 +794,7 @@
                 <i class="fas fa-question-circle" style="color:var(--sky);margin-right:6px;"></i>
                 Pertanyaan yang Sering Ditanyakan
             </div>
-            <div class="card-subtitle">FAQ seputar penggunaan sistem NetCORE</div>
+            <div class="card-subtitle">FAQ seputar penggunaan sistem BRS</div>
         </div>
     </div>
     <div class="card-body" style="display:flex;flex-direction:column;gap:0;">

@@ -55,7 +55,7 @@
           <div class="form-group">
             <label class="form-label">Status</label>
             <select name="status" class="form-control">
-              <option value="unpaid" {{ old('status', $invoice->status) == 'unpaid' ? 'selected' : '' }}>Belum Bayar</option>
+              <option value="unpaid" {{ old('status', $invoice->status) == 'unpaid' ? 'selected' : '' }}>Belum Lunas</option>
               <option value="paid" {{ old('status', $invoice->status) == 'paid' ? 'selected' : '' }}>Lunas</option>
               <option value="partial" {{ old('status', $invoice->status) == 'partial' ? 'selected' : '' }}>Parsial</option>
             </select>

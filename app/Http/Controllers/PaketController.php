@@ -9,7 +9,7 @@ class PaketController extends Controller
 {
     public function index()
     {
-        $pakets = Paket::withCount('pelanggans')->get();
+        $pakets = Paket::withCount('pelanggans')->orderBy('harga', 'asc')->get();
         return view('paket.index', compact('pakets'));
     }
 

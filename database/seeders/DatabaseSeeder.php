@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         // ── Users ──────────────────────────────────────────────
         $admin = User::create([
             'name'      => 'Administrator',
-            'email'     => 'admin@netcore.id',
+            'email'     => 'admin@brs.id',
             'password'  => Hash::make('password'),
             'role'      => 'admin',
             'is_active' => true,
@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
 
         $kasir = User::create([
             'name'      => 'Kasir Utama',
-            'email'     => 'kasir@netcore.id',
+            'email'     => 'kasir@brs.id',
             'password'  => Hash::make('password'),
             'role'      => 'kasir',
             'is_active' => true,
@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
 
         User::create([
             'name'      => 'Teknisi Lapangan',
-            'email'     => 'teknisi@netcore.id',
+            'email'     => 'teknisi@brs.id',
             'password'  => Hash::make('password'),
             'role'      => 'teknisi',
             'is_active' => true,

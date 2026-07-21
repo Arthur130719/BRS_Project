@@ -12,6 +12,7 @@
     <h1>Dashboard</h1>
     <p>Selamat datang kembali, {{ auth()->user()->name ?? 'Administrator' }} — Ringkasan sistem hari ini.</p>
   </div>
+  @if(auth()->user()->role !== 'teknisi')
   <div class="page-header-actions">
     <a href="{{ route('invoice.create') }}" class="btn btn-ghost btn-sm">
       <i class="fas fa-file-invoice"></i> Buat Invoice
@@ -20,6 +21,7 @@
       <i class="fas fa-user-plus"></i> Tambah Pelanggan
     </a>
   </div>
+  @endif
 </div>
 
 {{-- ── Stats Grid ── --}}
@@ -384,69 +386,82 @@
   // ══════════════════════════════════
   const paketCtx = document.getElementById('paketChart');
   if (paketCtx) {
-    const paketLabels = paketData.map(d => d.nama_paket ?? d.paket ?? d.label ?? d.name ?? 'Paket');
-    const paketValues = paketData.map(d => d.jumlah ?? d.total ?? d.value ?? d.count ?? 0);
-    const colors      = DOUGHNUT_COLORS.slice(0, paketLabels.length);
+    const rawPaketData = Array.isArray(paketData) ? paketData : Object.values(paketData || {});
+    const paketLabels = rawPaketData.map(function(d) { return d.nama_paket || d.paket || d.label || d.name || 'Paket'; });
+    const paketValues = rawPaketData.map(function(d) { return d.jumlah || d.total || d.value || d.count || 0; });
+    const total       = paketValues.reduce(function(a, b) { return a + b; }, 0);
+    
+    // Generate colors safely
+    const colors = paketLabels.map(function(_, i) {
+       return DOUGHNUT_COLORS[i % DOUGHNUT_COLORS.length];
+    });
 
-    const doughnut = new Chart(paketCtx, {
-      type: 'doughnut',
-      data: {
-        labels: paketLabels,
-        datasets: [{
-          data: paketValues,
-          backgroundColor: colors,
-          borderColor: '#1e293b',
-          borderWidth: 2,
-          hoverOffset: 6,
-        }]
-      },
-      options: {
-        responsive: false,
-        cutout: '68%',
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1e293b',
-            borderColor: '#334155',
-            borderWidth: 1,
-            titleColor: '#f1f5f9',
-            bodyColor: '#94a3b8',
-            callbacks: {
-              label: function(ctx) {
-                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                const pct   = total > 0 ? Math.round((ctx.parsed / total) * 100) : 0;
-                return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+    const legendEl = document.getElementById('paketLegend');
+
+    if (paketLabels.length === 0 || total === 0) {
+        // If no packages or no active users, show an empty state placeholder
+        paketCtx.style.display = 'none';
+        if (legendEl) {
+            legendEl.innerHTML = '<div style="font-size:13px; color:#64748b; text-align:center; padding: 20px 0;">' + 
+                '<i class="fas fa-box-open" style="font-size:24px; margin-bottom:8px; opacity:0.5;"></i><br>' +
+                (paketLabels.length === 0 ? 'Belum ada paket' : 'Belum ada pelanggan aktif') + 
+                '</div>';
+        }
+    } else {
+        const doughnut = new Chart(paketCtx, {
+          type: 'doughnut',
+          data: {
+            labels: paketLabels,
+            datasets: [{
+              data: paketValues,
+              backgroundColor: colors,
+              borderColor: '#1e293b',
+              borderWidth: 2,
+              hoverOffset: 6,
+            }]
+          },
+          options: {
+            responsive: false,
+            cutout: '68%',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#1e293b',
+                borderColor: '#334155',
+                borderWidth: 1,
+                titleColor: '#f1f5f9',
+                bodyColor: '#94a3b8',
+                callbacks: {
+                  label: function(ctx) {
+                    const datasetTotal = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                    const pct   = datasetTotal > 0 ? Math.round((ctx.parsed / datasetTotal) * 100) : 0;
+                    return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                  }
+                }
               }
             }
           }
-        }
-      }
-    });
-
-    // Build custom legend
-    const legendEl = document.getElementById('paketLegend');
-    if (legendEl) {
-      const total = paketValues.reduce((a, b) => a + b, 0);
-      paketLabels.forEach((label, i) => {
-        const pct  = total > 0 ? Math.round((paketValues[i] / total) * 100) : 0;
-        const item = document.createElement('div');
-        item.style.cssText = 'display:flex; align-items:center; gap:8px; cursor:pointer;';
-        item.innerHTML = `
-          <div style="width:10px; height:10px; border-radius:2px; background:${colors[i]}; flex-shrink:0;"></div>
-          <div>
-            <div style="font-size:12px; color:#f1f5f9; font-weight:500; line-height:1.2;">${label}</div>
-            <div style="font-size:10px; color:#64748b; font-family:'JetBrains Mono',monospace;">${paketValues[i]} pelanggan · ${pct}%</div>
-          </div>
-        `;
-        item.addEventListener('mouseenter', () => {
-          doughnut.setDatasetVisibility(0, true);
         });
-        legendEl.appendChild(item);
-      });
 
-      if (paketLabels.length === 0) {
-        legendEl.innerHTML = '<div style="font-size:12px; color:#64748b;">Belum ada data paket</div>';
-      }
+        // Build custom legend
+        if (legendEl) {
+          paketLabels.forEach(function(label, i) {
+            // Only show in legend if there are users, or show all? Let's show all
+            const pct  = total > 0 ? Math.round((paketValues[i] / total) * 100) : 0;
+            const item = document.createElement('div');
+            item.style.cssText = 'display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:4px;';
+            item.innerHTML = 
+              '<div style="width:10px; height:10px; border-radius:2px; background:' + colors[i] + '; flex-shrink:0;"></div>' +
+              '<div>' +
+                '<div style="font-size:12px; color:#f1f5f9; font-weight:500; line-height:1.2;">' + label + '</div>' +
+                '<div style="font-size:10px; color:#64748b; font-family:\'JetBrains Mono\',monospace;">' + paketValues[i] + ' pelanggan · ' + pct + '%</div>' +
+              '</div>';
+            item.addEventListener('mouseenter', function() {
+              doughnut.setDatasetVisibility(0, true);
+            });
+            legendEl.appendChild(item);
+          });
+        }
     }
   }
 

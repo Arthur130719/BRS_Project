@@ -173,6 +173,19 @@
                 <span class="key">Alamat</span>
                 <span class="val" style="text-align:right;max-width:55%;word-break:break-word;">{{ $pelanggan->alamat ?? '—' }}</span>
             </div>
+            <div class="info-row">
+                <span class="key">Koordinat</span>
+                <span class="val">
+                    @if($pelanggan->latitude && $pelanggan->longitude)
+                        <span class="mono">{{ $pelanggan->latitude }}, {{ $pelanggan->longitude }}</span>
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ $pelanggan->latitude }},{{ $pelanggan->longitude }}" target="_blank" style="margin-left: 8px; color: #3b82f6; text-decoration: underline;" title="Buka di Google Maps">
+                            <i class="fas fa-map-marker-alt"></i> Peta
+                        </a>
+                    @else
+                        <span class="mono-mute">—</span>
+                    @endif
+                </span>
+            </div>
 
             {{-- Divider --}}
             <div style="margin:14px 0 10px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-4);">Layanan & Jaringan</div>

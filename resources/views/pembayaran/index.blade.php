@@ -7,7 +7,7 @@
 @php
     $bankName    = \App\Models\SystemSetting::get('bank_name', 'BCA');
     $bankAccount = \App\Models\SystemSetting::get('bank_account', '1234567890');
-    $bankHolder  = \App\Models\SystemSetting::get('bank_holder', 'PT. NetCORE Indonesia');
+    $bankHolder  = \App\Models\SystemSetting::get('bank_holder', 'PT. BINA RAJA SOLUSI');
 @endphp
 
 {{-- ── Page Header ── --}}
@@ -35,18 +35,22 @@
         <span class="badge badge-active" style="font-size:12px;">Aktif</span>
     </div>
     <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
-            <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:14px;border:1px solid var(--border);">
-                <div style="font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Bank</div>
-                <div style="font-size:16px;font-weight:700;color:var(--text-1);">{{ $bankName }}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+            <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;">Bank BCA</div>
+                    <i class="fas fa-building-columns" style="color:var(--sky);font-size:14px;"></i>
+                </div>
+                <div class="mono" style="font-size:20px;font-weight:700;color:var(--text-1);">6280939267</div>
+                <div style="font-size:12px;color:var(--text-1);"><span style="color:var(--text-3);">a.n</span> AISYAH NURUL ISTIQOMAH</div>
             </div>
-            <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:14px;border:1px solid var(--border);">
-                <div style="font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">No. Rekening</div>
-                <div class="mono" style="font-size:16px;font-weight:700;color:var(--sky);">{{ $bankAccount }}</div>
-            </div>
-            <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:14px;border:1px solid var(--border);">
-                <div style="font-size:10px;color:var(--text-4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Atas Nama</div>
-                <div style="font-size:14px;font-weight:600;color:var(--text-1);">{{ $bankHolder }}</div>
+            <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;">Bank Mandiri</div>
+                    <i class="fas fa-building-columns" style="color:var(--amber);font-size:14px;"></i>
+                </div>
+                <div class="mono" style="font-size:20px;font-weight:700;color:var(--text-1);">1760003390752</div>
+                <div style="font-size:12px;color:var(--text-1);"><span style="color:var(--text-3);">a.n</span> BINA RAJA SOLUSI</div>
             </div>
             <div style="background:rgba(245,158,11,0.06);border-radius:var(--radius);padding:14px;border:1px solid rgba(245,158,11,0.2);">
                 <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">

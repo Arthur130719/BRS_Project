@@ -38,7 +38,7 @@ class PembayaranController extends Controller
             'nama_bank'   => 'nullable|max:100',
             'tgl_bayar'   => 'required|date',
             'keterangan'  => 'nullable|max:255',
-            'bukti_transfer' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'bukti_transfer' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
         ]);
 
         $validated['user_id'] = auth()->id();

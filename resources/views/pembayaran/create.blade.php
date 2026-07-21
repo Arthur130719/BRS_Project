@@ -237,7 +237,7 @@
                             </label>
                             <div x-ref="buktiName" class="mono-mute" style="margin-top:6px;font-size:11px;"></div>
                         </div>
-                        <div class="form-hint">Format: JPG, PNG, PDF — Maks. 2MB</div>
+                        <div class="form-hint">Format: JPG, JPEG, PNG, PDF — Maks. 10MB</div>
                         @if($errors->has('bukti_transfer'))
                             <div class="form-error">{{ $errors->first('bukti_transfer') }}</div>
                         @endif

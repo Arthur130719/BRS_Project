@@ -3,17 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
 
-class Pelanggan extends Model
+class Pelanggan extends Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use HasApiTokens, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'paket_id', 'nas_id', 'olt_id',
         'username_pppoe', 'password_pppoe',
         'nama', 'phone', 'alamat',
+        'latitude', 'longitude',
         'ip_address', 'ip_pool',
         'status', 'isolir_by', 'isolir_at',
         'tgl_aktif', 'expiry',
