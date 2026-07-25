@@ -14,7 +14,7 @@ function LandingPage() {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   useEffect(() => {
-    fetch(`http://${window.location.hostname}:8080/api/paket`)
+    fetch(`http://${window.location.hostname}:8000/api/paket`)
       .then(res => res.json())
       .then(data => {
         setPackages(data);
@@ -72,7 +72,7 @@ function LandingPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    fetch(`http://${window.location.hostname}:8080/api/pelanggan/register`, {
+    fetch(`http://${window.location.hostname}:8000/api/pelanggan/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -102,7 +102,7 @@ function LandingPage() {
   return (
     <>
       {/* TopNavBar */}
-      <header className="bg-surface/90 backdrop-blur-md dark:bg-surface-dim/90 docked full-width top-0 sticky z-50 border-b border-outline-variant/30 dark:border-outline/20 shadow-sm flex justify-between items-center w-full px-margin-desktop max-w-max-width mx-auto py-4">
+      <header className="bg-surface/90 backdrop-blur-md dark:bg-surface-dim/90 docked full-width top-0 sticky z-50 border-b border-outline-variant/30 dark:border-outline/20 shadow-sm flex justify-between items-center w-full px-6 lg:px-margin-desktop max-w-max-width mx-auto py-4">
         <div className="flex items-center gap-gutter">
           <a className="font-headline-md text-headline-md font-bold text-secondary dark:text-secondary-fixed flex items-center gap-2" href="#">
             <img alt="BRS Logo" className="h-10 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpyHUd3GTOUf4CRpHHgdobAINBU41fmRe5JBUoMqOVXLdE3fJUNiyFIEK7QW7cGuJZA4x4osK5r6sI5jzBNPoBao6coIs7Zs9qpzSsJm1umeqBwqzLXlQPydw4xyoQvboVvSi6lAVnruXyFiqBF2hGZOEIZ6aqUPdG84DDAzEx6heWsjxLoJQ6RQSbSVk1VrOHZtvqsM0X_TPJ1Giudd9MOG3loF1U850bNxU0saCNRIahYYRGImnPxyr-p5qka1kXL3v9FcYMXlA" />
@@ -116,17 +116,17 @@ function LandingPage() {
           <a className="text-on-surface-variant hover:text-primary transition-colors duration-200 font-label-md text-label-md hover:opacity-90" href="#coverage">Coverage Area</a>
           <a className="text-on-surface-variant hover:text-primary transition-colors duration-200 font-label-md text-label-md hover:opacity-90" href="#why-us">Why Choose Us</a>
         </nav>
-        <div className="flex items-center gap-4">
-          <a href="/login" className="hidden sm:flex text-secondary font-label-md text-label-md font-bold hover:text-primary-container transition-colors items-center gap-1">
-            <span className="material-symbols-outlined text-[20px]">login</span> Portal
+        <div className="flex items-center gap-3 sm:gap-4">
+          <a href="/login" className="flex text-secondary font-label-md text-label-md font-bold hover:text-primary-container transition-colors items-center gap-1">
+            <span className="material-symbols-outlined text-[20px]">login</span> <span className="hidden sm:inline">Portal</span>
           </a>
-          <button onClick={scrollToPackages} className="bg-primary-container text-on-primary font-label-md text-label-md font-bold py-2 px-6 rounded-full hover:opacity-90 transition-opacity scale-95 transition-transform duration-150">Daftar</button>
+          <button onClick={scrollToPackages} className="bg-primary-container text-on-primary font-label-md text-label-md font-bold py-2 px-4 sm:px-6 rounded-full hover:opacity-90 transition-opacity scale-95 transition-transform duration-150">Daftar</button>
         </div>
       </header>
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-24 pb-xl px-margin-desktop max-w-max-width mx-auto overflow-hidden">
+        <section className="relative pt-24 pb-xl px-6 lg:px-margin-desktop max-w-max-width mx-auto overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl items-center relative z-10">
             <div className="flex flex-col gap-md">
               <h1 className="font-headline-xl text-headline-xl text-on-surface leading-tight text-secondary">
@@ -155,7 +155,7 @@ function LandingPage() {
         </section>
 
         {/* Key Benefits Bento Grid */}
-        <section id="why-us" className="py-xl px-margin-desktop bg-surface-container-low border-y border-outline-variant/30">
+        <section id="why-us" className="py-xl px-6 lg:px-margin-desktop bg-surface-container-low border-y border-outline-variant/30">
           <div className="max-w-max-width mx-auto">
             <div className="text-center mb-16">
               <h2 className="font-headline-lg text-headline-lg text-secondary mb-4">Mengapa Memilih BRS?</h2>
@@ -182,7 +182,7 @@ function LandingPage() {
         </section>
 
         {/* Pricing Plans */}
-        <section id="packages" className="py-xl px-margin-desktop max-w-max-width mx-auto">
+        <section id="packages" className="py-xl px-6 lg:px-margin-desktop max-w-max-width mx-auto">
           <div className="text-center mb-16">
             <h2 className="font-headline-lg text-headline-lg text-secondary mb-4">Pilihan Paket Internet</h2>
             <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">Solusi tepat untuk setiap kebutuhan konektivitas Anda.</p>
@@ -265,7 +265,7 @@ function LandingPage() {
         </section>
 
         {/* Installation Process Flow */}
-        <section id="services" className="py-xl px-margin-desktop bg-surface-container-low border-y border-outline-variant/30">
+        <section id="services" className="py-xl px-6 lg:px-margin-desktop bg-surface-container-low border-y border-outline-variant/30">
           <div className="max-w-max-width mx-auto">
             <div className="text-center mb-16">
               <h2 className="font-headline-lg text-headline-lg text-secondary mb-4">Proses Pemasangan Mudah</h2>
@@ -310,7 +310,7 @@ function LandingPage() {
         </section>
 
         {/* Coverage Area Section */}
-        <section id="coverage" className="py-xl px-margin-desktop max-w-max-width mx-auto">
+        <section id="coverage" className="py-xl px-6 lg:px-margin-desktop max-w-max-width mx-auto">
           <div className="bg-surface rounded-2xl p-8 md:p-12 ambient-shadow border border-outline-variant/30 text-center relative overflow-hidden">
             <div className="absolute top-0 right-0 -z-10 w-64 h-64 bg-primary-container/20 rounded-full blur-3xl opacity-50 transform translate-x-1/2 -translate-y-1/2"></div>
             <div className="absolute bottom-0 left-0 -z-10 w-64 h-64 bg-secondary/10 rounded-full blur-3xl opacity-50 transform -translate-x-1/2 translate-y-1/2"></div>
@@ -340,7 +340,7 @@ function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-surface-container-highest dark:bg-inverse-surface full-width flat no shadows">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop py-xl max-w-max-width mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter px-6 lg:px-margin-desktop py-xl max-w-max-width mx-auto">
           <div className="md:col-span-1 flex flex-col gap-4">
             <span className="font-headline-md text-headline-md font-bold text-secondary dark:text-secondary-fixed-dim">
               <img alt="BRS Logo" className="h-10 w-auto object-contain mb-2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpyHUd3GTOUf4CRpHHgdobAINBU41fmRe5JBUoMqOVXLdE3fJUNiyFIEK7QW7cGuJZA4x4osK5r6sI5jzBNPoBao6coIs7Zs9qpzSsJm1umeqBwqzLXlQPydw4xyoQvboVvSi6lAVnruXyFiqBF2hGZOEIZ6aqUPdG84DDAzEx6heWsjxLoJQ6RQSbSVk1VrOHZtvqsM0X_TPJ1Giudd9MOG3loF1U850bNxU0saCNRIahYYRGImnPxyr-p5qka1kXL3v9FcYMXlA" />
@@ -369,7 +369,7 @@ function LandingPage() {
             </div>
           </div>
         </div>
-        <div className="border-t border-outline-variant/20 px-margin-desktop py-6 max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="border-t border-outline-variant/20 px-6 lg:px-margin-desktop py-6 max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="font-label-sm text-label-sm text-on-surface-variant text-center md:text-left">
             © 2024 Bina Raja Solusi (BRS). Official Partner of ISP Media Cepat Indonesia (MCI).
           </p>

@@ -1,11 +1,20 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function Login() {
   const [formData, setFormData] = useState({ username_pppoe: '', password_pppoe: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('expired') === '1' || location.state?.error) {
+      setError(location.state?.error || 'Sesi Anda telah berakhir. Silakan login ulang untuk melanjutkan.');
+    }
+  }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,8 +22,8 @@ function Login() {
     setError('');
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/pelanggan/login`, {
-        method: POST`,
+      const response = await fetch(`http://${window.location.hostname}:8000/api/pelanggan/login`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -25,8 +34,8 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('brs_token', data.token);
-        localStorage.setItem('brs_user', JSON.stringify(data.user));
+        sessionStorage.setItem('brs_token', data.token);
+        sessionStorage.setItem('brs_user', JSON.stringify(data.user));
         navigate('/dashboard');
       } else {
         setError(data.message || 'Login gagal. Periksa kembali username dan password Anda.');
@@ -45,7 +54,7 @@ function Login() {
       <div className="absolute bottom-0 left-0 -z-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl opacity-60 transform -translate-x-1/2 translate-y-1/2"></div>
       
       <div className="w-full max-w-md bg-surface/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-outline-variant/30 ambient-shadow">
-        <div className="p-8 sm:p-10">
+        <div className="p-6 sm:p-10">
           <div className="text-center mb-8">
             <img 
               alt="BRS Logo" 
@@ -84,20 +93,27 @@ function Login() {
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/50">lock</span>
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   required
                   value={formData.password_pppoe}
                   onChange={(e) => setFormData({...formData, password_pppoe: e.target.value})}
-                  className="w-full pl-12 pr-4 py-3 bg-surface-bright border border-outline-variant/50 rounded-xl focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container font-body-md text-on-surface transition-all"
+                  className="w-full pl-12 pr-12 py-3 bg-surface-bright border border-outline-variant/50 rounded-xl focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container font-body-md text-on-surface transition-all"
                   placeholder="Masukkan password Anda"
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant focus:outline-none"
+                >
+                  <span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                </button>
               </div>
             </div>
 
             <button 
               type="submit" 
               disabled={isLoading}
-              className={`mt-4 w-full bg-primary-container text-on-primary font-label-md text-label-lg font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed scale-95' : 'hover:bg-surface-tint hover:shadow-primary-container/30 hover:-translate-y-0.5'}`}
+              className={"mt-4 w-full bg-primary-container text-on-primary font-label-md text-label-lg font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 " + (isLoading ? "opacity-70 cursor-not-allowed scale-95" : "hover:bg-surface-tint hover:shadow-primary-container/30 hover:-translate-y-0.5")}
             >
               {isLoading ? (
                 <>

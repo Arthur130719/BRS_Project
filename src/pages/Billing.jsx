@@ -8,9 +8,9 @@ export default function Billing() {
   const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('brs_token');
+    const token = sessionStorage.getItem('brs_token');
     
-    fetch(`http://${window.location.hostname}:8080/api/pelanggan/invoices`, {
+    fetch(`http://${window.location.hostname}:8000/api/pelanggan/invoices`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json'
@@ -49,10 +49,10 @@ export default function Billing() {
     
     try {
       setDownloadingId(id);
-      const token = localStorage.getItem('brs_token');
-      const response = await fetch(`http://${window.location.hostname}:8080/api/pelanggan/invoices/${id}/download`, {
+      const token = sessionStorage.getItem('brs_token');
+      const response = await fetch(`http://${window.location.hostname}:8000/api/pelanggan/invoices/${id}/download`, {
         headers: {
-          `Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         }
       });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

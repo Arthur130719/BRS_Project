@@ -9,34 +9,77 @@ export default function DashboardHome() {
     pelanggan: null,
     paket: null,
     tagihan: null,
-    tiket_open: 0,
-    network_health: {
-      ping: 12,
-      latency: 15,
-      modem_rx: -18,
-      modem_tx: 2.5
-    }
+    tiket_open: 0
   });
+  const [liveSession, setLiveSession] = useState({
+    status: 'loading',
+    uptime: '--',
+    download: '--',
+    upload: '--',
+    rate: '--'
+  });
+  const [semuaPaket, setSemuaPaket] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('brs_token');
+    const token = sessionStorage.getItem('brs_token');
     
-    fetch(`http://${window.location.hostname}:8080/api/pelanggan/dashboard`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-      }
-    })
-      .then(res => res.json())
-      .then(resData => {
+    Promise.all([
+      fetch(`http://${window.location.hostname}:8000/api/pelanggan/dashboard`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      }).then(res => {
+        if (res.status === 401) {
+          sessionStorage.removeItem('brs_token');
+          sessionStorage.removeItem('brs_user');
+          navigate('/login', { state: { error: 'Sesi Anda telah berakhir karena perubahan sandi atau waktu habis. Silakan login ulang.' } });
+          throw new Error('Unauthenticated');
+        }
+        return res.json();
+      }),
+      fetch(`http://${window.location.hostname}:8000/api/paket`).then(res => res.json())
+    ])
+      .then(([resData, paketData]) => {
         setData(resData);
+        setSemuaPaket(paketData);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching dashboard data:', err);
         setLoading(false);
       });
+  }, []);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('brs_token');
+    if (!token) return;
+
+    const fetchLiveSession = () => {
+      fetch(`http://${window.location.hostname}:8000/api/pelanggan/live-session`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        setLiveSession({
+          status: data.status,
+          uptime: data.uptime,
+          download: data.download,
+          upload: data.upload,
+          rate: data.rate
+        });
+      })
+      .catch(err => console.error('Error fetching live session:', err));
+    };
+
+    // Fetch immediately, then every 1s
+    fetchLiveSession();
+    const interval = setInterval(fetchLiveSession, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const formatRupiah = (number) => {
@@ -56,7 +99,17 @@ export default function DashboardHome() {
   const pelanggan = data.pelanggan || { nama: 'Guest User', username_pppoe: 'brs-guest', status: 'Tidak Aktif' };
   const paket = data.paket || { nama_paket: 'Tidak ada paket', kecepatan: 0 };
   const tagihan = data.tagihan || { nominal: 0, status: 'Lunas', sisa_hari: 0 };
-  const statusAktif = pelanggan.status === 'Aktif';
+  const statusAktif = pelanggan.status?.toLowerCase() === 'active' || pelanggan.status?.toLowerCase() === 'aktif';
+
+  let nextPaket = null;
+  if (semuaPaket.length > 0 && paket.kecepatan > 0) {
+    const sortedPakets = [...semuaPaket].sort((a, b) => a.kecepatan_down - b.kecepatan_down);
+    nextPaket = sortedPakets.find(p => p.kecepatan_down > paket.kecepatan);
+  }
+
+  const promoTitle = nextPaket ? `Upgrade to ${nextPaket.kecepatan_down}Mbps` : 'Need Custom Speed?';
+  const promoSubtitle = nextPaket ? `Hanya ${formatRupiah(nextPaket.harga)}/bulan untuk streaming tanpa batas.` : 'Request kecepatan lebih tinggi sesuai kebutuhanmu.';
+  const promoMessage = nextPaket ? `Halo Admin BRS, saya tertarik untuk upgrade internet ke paket ${nextPaket.kecepatan_down}Mbps (${formatRupiah(nextPaket.harga)}). Boleh info detailnya?` : 'Halo Admin BRS, saya butuh custom speed internet yang lebih cepat dari paket saya sekarang. Boleh konsultasi?';
 
   return (
     <>
@@ -71,7 +124,7 @@ export default function DashboardHome() {
           </span>
           <span className={`flex items-center gap-xs px-3 py-1 rounded-full border ${statusAktif ? 'bg-[#ecfdf5] text-[#065f46] border-[#a7f3d0]' : 'bg-[#fef2f2] text-[#991b1b] border-[#fecaca]'}`}>
             {statusAktif && <div className="w-2 h-2 rounded-full bg-[#10b981] pulse-dot"></div>}
-            Connection: {pelanggan.status}
+            Connection: {statusAktif ? 'Aktif (Tidak Terisolir)' : (pelanggan.status.toLowerCase() === 'suspend' ? 'Terisolir' : pelanggan.status)}
           </span>
         </div>
       </header>
@@ -152,33 +205,43 @@ export default function DashboardHome() {
             <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>health_and_safety</span>
             <h3 className="font-headline-md text-headline-md text-secondary">Network Health</h3>
           </div>
+          
+          {liveSession.status === 'offline' && (
+            <div className="mb-md p-sm bg-[#fef2f2] border border-[#fecaca] rounded-lg flex items-start gap-sm">
+              <span className="material-symbols-outlined text-[#991b1b]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+              <div>
+                <h4 className="font-label-md font-bold text-[#991b1b] mb-1">Koneksi Internet Terputus</h4>
+                <p className="font-body-sm text-[#991b1b]/90">
+                  Silakan periksa router/modem di rumah Anda. Jika ada indikator lampu berwarna <strong className="text-red-700">MERAH (LOS/Loss)</strong> yang berkedip, kemungkinan besar ada kabel optik yang terputus atau tertekuk. Segera hubungi Admin untuk melaporkan gangguan ini.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-sm flex-grow items-center">
-            <div className="flex flex-col items-center justify-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/50">
-              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Ping</span>
+            <div className="flex flex-col items-center justify-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/50 h-full">
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Uptime</span>
               <div className="flex items-baseline gap-xs">
-                <span className="font-headline-md text-headline-md text-primary-container">{data.network_health.ping}</span>
-                <span className="font-label-sm text-label-sm">ms</span>
+                <span className="font-headline-sm text-headline-sm text-primary-container font-mono">{liveSession.uptime}</span>
               </div>
             </div>
-            <div className="flex flex-col items-center justify-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/50">
-              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Latency</span>
-              <div className="flex items-baseline gap-xs">
-                <span className="font-headline-md text-headline-md text-secondary">{data.network_health.latency}</span>
-                <span className="font-label-sm text-label-sm">ms</span>
+            <div className="flex flex-col items-center justify-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/50 h-full">
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Rate (DL/UL)</span>
+              <div className="flex flex-col items-center">
+                <span className="text-sm font-semibold text-secondary font-mono whitespace-nowrap"><span className="material-symbols-outlined text-[12px]">download</span> {liveSession.rate.split(' / ')[0] || '--'}</span>
+                <span className="text-sm font-semibold text-tertiary font-mono whitespace-nowrap"><span className="material-symbols-outlined text-[12px]">upload</span> {liveSession.rate.split(' / ')[1] || '--'}</span>
               </div>
             </div>
-            <div className="flex flex-col items-center justify-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/50">
-              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Modem RX</span>
+            <div className="flex flex-col items-center justify-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/50 h-full">
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Download</span>
               <div className="flex items-baseline gap-xs">
-                <span className="font-headline-md text-headline-md text-on-surface">{data.network_health.modem_rx}</span>
-                <span className="font-label-sm text-label-sm">dBm</span>
+                <span className="font-headline-sm text-headline-sm text-on-surface font-mono" style={{color: '#10b981'}}>{liveSession.download}</span>
               </div>
             </div>
-            <div className="flex flex-col items-center justify-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/50">
-              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Modem TX</span>
+            <div className="flex flex-col items-center justify-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/50 h-full">
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Upload</span>
               <div className="flex items-baseline gap-xs">
-                <span className="font-headline-md text-headline-md text-on-surface">{data.network_health.modem_tx}</span>
-                <span className="font-label-sm text-label-sm">dBm</span>
+                <span className="font-headline-sm text-headline-sm text-on-surface font-mono" style={{color: '#0ea5e9'}}>{liveSession.upload}</span>
               </div>
             </div>
           </div>
@@ -188,11 +251,16 @@ export default function DashboardHome() {
         <div className="glass-panel rounded-xl overflow-hidden relative min-h-[200px]">
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuARm3VaXDgRJs2B_1sKCKtT5-Y2yjJfMldaw_Y9oEMdQTEZs8BwOH5Cb4GkVO-lxDxAOsyvzmniXbA40b8Qyho2adAw2qgNQS6Q49FT4Ca0oxswDn2_ei778FVoghUYHSv04fZMZ75_dF2KIF0awYFCvBJtwYTW7ROleXxwODIPb2STpsSmBrDzfg42KSEHFvXbLcJLgfRqNmpjPQ2R-D5Ho0LLCgJ8bVM0plTPgx9s_u76T5CRhwMsMpsxvBnOwyyDQb4PT0V75ek')" }}></div>
           <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 to-transparent flex flex-col justify-end p-md">
-            <h4 className="font-headline-md text-headline-md text-on-primary mb-xs">Upgrade to 200Mbps</h4>
-            <p className="font-label-sm text-label-sm text-on-primary/80 mb-sm">Experience seamless 4K streaming for the whole family.</p>
-            <button className="text-left font-label-md text-label-md text-primary-fixed-dim hover:text-white transition-colors flex items-center gap-xs">
+            <h4 className="font-headline-md text-headline-md text-on-primary mb-xs">{promoTitle}</h4>
+            <p className="font-label-sm text-label-sm text-on-primary/80 mb-sm">{promoSubtitle}</p>
+            <a 
+              href={`https://wa.me/6287761205991?text=${encodeURIComponent(promoMessage)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-left font-label-md text-label-md text-primary-fixed-dim hover:text-white transition-colors flex items-center gap-xs w-max cursor-pointer"
+            >
               View Offers <span className="material-symbols-outlined text-sm">arrow_forward</span>
-            </button>
+            </a>
           </div>
         </div>
       </div>

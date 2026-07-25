@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export default function DashboardLayout({ children, onPayClick }) {
@@ -6,10 +6,27 @@ export default function DashboardLayout({ children, onPayClick }) {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Poll session status every 10 seconds
+  useEffect(() => {
+    const token = sessionStorage.getItem('brs_token');
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      fetch(`http://${window.location.hostname}:8000/api/pelanggan/ping`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      }).catch(err => console.error('Ping failed:', err));
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLogout = () => {
-    const token = localStorage.getItem('brs_token');
+    const token = sessionStorage.getItem('brs_token');
     if (token) {
-      fetch(`http://${window.location.hostname}:8080/api/pelanggan/logout`, {
+      fetch(`http://${window.location.hostname}:8000/api/pelanggan/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -17,8 +34,8 @@ export default function DashboardLayout({ children, onPayClick }) {
         }
       });
     }
-    localStorage.removeItem('brs_token');
-    localStorage.removeItem('brs_user');
+    sessionStorage.removeItem('brs_token');
+    sessionStorage.removeItem('brs_user');
     navigate('/login');
   };
 
@@ -39,7 +56,7 @@ export default function DashboardLayout({ children, onPayClick }) {
 
       {/* TopNavBar */}
       <nav className="bg-surface/90 backdrop-blur-md dark:bg-surface-dim/90 docked full-width top-0 sticky z-50 border-b border-outline-variant/30 dark:border-outline/20 shadow-sm transition-all duration-300">
-        <div className="flex justify-between items-center w-full px-margin-desktop max-w-max-width mx-auto py-4">
+        <div className="flex justify-between items-center w-full px-6 lg:px-margin-desktop max-w-max-width mx-auto py-4">
           <Link to="/" className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
             <span className="material-symbols-outlined text-primary-container text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>router</span>
             <span className="font-headline-md text-headline-md font-bold text-secondary dark:text-secondary-fixed">BRS</span>
@@ -109,7 +126,7 @@ export default function DashboardLayout({ children, onPayClick }) {
       )}
 
       {/* Main Content */}
-      <main className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-lg relative z-10">
+      <main className="max-w-max-width mx-auto px-4 md:px-margin-desktop py-lg relative z-10">
         {children}
       </main>
     </div>

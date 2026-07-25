@@ -9,7 +9,7 @@ import Login from './pages/Login';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('brs_token');
+  const token = sessionStorage.getItem('brs_token');
   if (!token) {
     return <Navigate to="/login" replace />;
   }
