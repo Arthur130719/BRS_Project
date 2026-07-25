@@ -10,7 +10,7 @@ class Notifikasi extends Model
     use HasFactory;
 
     protected $fillable = [
-        'type', 'title', 'deskripsi', 'is_read',
+        'type', 'title', 'deskripsi', 'is_read', 'target_role', 'url'
     ];
 
     protected $casts = [

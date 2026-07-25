@@ -17,6 +17,15 @@
                 {{ $ticket->status }}
             </span>
         </h1>
+        @if($ticket->support_ticket_id)
+        <div style="margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #fbbf24; background: rgba(251,191,36,0.12); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(251,191,36,0.3);">
+            <i class="fas fa-headset"></i>
+            Berasal dari Aduan Pelanggan #{{ $ticket->support_ticket_id }}
+            @if($ticket->supportTicket && $ticket->supportTicket->subject)
+                <span style="color: rgba(255,255,255,0.5); font-weight: 400;">— {{ $ticket->supportTicket->subject }}</span>
+            @endif
+        </div>
+        @endif
     </div>
 </div>
 
@@ -182,6 +191,56 @@
     </div>
 </div>
 
+<!-- Diskusi Tiket -->
+<div class="card" style="margin-top: 20px;" id="chat-section">
+    <h3><i class="fas fa-comments"></i> Diskusi Tiket</h3>
+    <hr style="border-color: rgba(255,255,255,0.05); margin: 15px 0;">
+    
+    <div id="chat-messages" style="max-height: 400px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 15px;">
+        @if($ticket->supportTicket && $ticket->supportTicket->chats && $ticket->supportTicket->chats->count() > 0)
+            @foreach($ticket->supportTicket->chats as $chat)
+                @php
+                    $isMe = $chat->sender_id == auth()->id() && $chat->sender_type != 'pelanggan';
+                    $align = $isMe ? 'right' : 'left';
+                    $bg = $isMe ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+                    $border = $isMe ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)';
+                    
+                    $senderName = 'Unknown';
+                    if ($chat->sender_type == 'pelanggan' && $chat->pelangganSender) {
+                        $senderName = $chat->pelangganSender->nama . ' (Pelanggan)';
+                    } elseif ($chat->userSender) {
+                        $senderName = $chat->userSender->name . ' (' . ucfirst($chat->sender_type) . ')';
+                    }
+                @endphp
+                <div style="text-align: {{ $align }}; margin-bottom: 15px;">
+                    <div style="display: inline-block; max-width: 70%; text-align: left; background: {{ $bg }}; border: {{ $border }}; padding: 10px 15px; border-radius: 8px;">
+                        <div style="font-size: 11px; color: var(--text-3); margin-bottom: 5px;">
+                            <strong>{{ $senderName }}</strong> &bull; {{ $chat->created_at->format('d M Y, H:i') }}
+                        </div>
+                        <div style="font-size: 14px; color: var(--text-1); white-space: pre-wrap;">{{ $chat->message }}</div>
+                    </div>
+                </div>
+            @endforeach
+        @elseif(!$ticket->support_ticket_id)
+            <div style="text-align: center; color: var(--text-3); padding: 20px;">Fitur diskusi hanya tersedia untuk tiket yang diajukan langsung oleh pelanggan.</div>
+        @else
+            <div style="text-align: center; color: var(--text-3); padding: 20px;">Belum ada diskusi.</div>
+        @endif
+    </div>
+
+    @if($ticket->support_ticket_id)
+    <form action="{{ route('ticket-chats.store', $ticket->id) }}" method="POST">
+        @csrf
+        <div class="form-group mb-10">
+            <textarea name="message" id="chatInput" class="form-control" rows="2" placeholder="Tulis balasan untuk pelanggan atau catatan teknisi di sini..." required></textarea>
+        </div>
+        <div style="text-align: right;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Kirim Pesan</button>
+        </div>
+    </form>
+    @endif
+</div>
+
 @if(auth()->user()->role !== 'teknisi')
 <form action="{{ route('tickets.destroy', $ticket->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus tiket ini?');" style="margin-top: 20px; text-align: right;">
     @csrf
@@ -226,5 +285,44 @@ document.getElementById('statusSelect').addEventListener('change', function() {
         document.getElementById('alatSection').style.display = 'none';
     }
 });
+
+// Auto-scroll chat to bottom
+const chatContainer = document.getElementById('chat-messages');
+function scrollToBottom() {
+    if(chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+}
+
+// Enter to submit chat
+const chatInput = document.getElementById('chatInput');
+if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.closest('form').submit();
+        }
+    });
+}
+
+// Initial scroll
+scrollToBottom();
+
+// Polling for live chat update
+@if($ticket->support_ticket_id)
+setInterval(function() {
+    fetch("{{ route('ticket-chats.html', $ticket->id) }}")
+        .then(response => response.text())
+        .then(html => {
+            if(chatContainer && chatContainer.innerHTML !== html) {
+                // Check if user was already at bottom to keep scroll
+                let isAtBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 50;
+                chatContainer.innerHTML = html;
+                if(isAtBottom) scrollToBottom();
+            }
+        })
+        .catch(err => console.error(err));
+}, 3000);
+@endif
 </script>
 @endsection

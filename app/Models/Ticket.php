@@ -17,4 +17,9 @@ class Ticket extends Model
     {
         return $this->belongsTo(User::class, 'teknisi_id');
     }
+
+    public function supportTicket()
+    {
+        return $this->belongsTo(SupportTicket::class, 'support_ticket_id');
+    }
 }

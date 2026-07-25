@@ -247,11 +247,16 @@
     </div>
 
     <div class="notif-actions">
+        @if(!empty($notif->url))
+            <a href="{{ $notif->url }}" class="btn btn-sm btn-primary" style="margin-right: 5px; font-size: 11px; padding: 4px 8px;">
+                <i class="fas fa-external-link-alt"></i> Buka
+            </a>
+        @endif
         @if(!$isRead)
             <form method="POST" action="{{ route('notifikasi.baca', $notif->id) }}">
                 @csrf
-                <button type="submit" class="btn btn-ghost btn-xs" title="Tandai sudah dibaca">
-                    <i class="fas fa-check"></i> Baca
+                <button type="submit" class="btn btn-sm btn-ghost" title="Tandai dibaca">
+                    <i class="fas fa-check"></i>
                 </button>
             </form>
         @else

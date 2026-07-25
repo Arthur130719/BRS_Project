@@ -17,10 +17,13 @@ class TicketController extends Controller
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('nomor_tiket', 'LIKE', "%{$search}%")
-                  ->orWhere('nama_pelapor', 'LIKE', "%{$search}%")
+                $q->where('nomor_tiket', 'LIKE', "{$search}%")
+                  ->orWhere('nomor_tiket', 'LIKE', "% {$search}%")
+                  ->orWhere('nama_pelapor', 'LIKE', "{$search}%")
+                  ->orWhere('nama_pelapor', 'LIKE', "% {$search}%")
                   ->orWhereHas('pelanggan', function($q2) use ($search) {
-                      $q2->where('nama', 'LIKE', "%{$search}%");
+                      $q2->where('nama', 'LIKE', "{$search}%")
+                         ->orWhere('nama', 'LIKE', "% {$search}%");
                   });
             });
         }
@@ -90,7 +93,7 @@ class TicketController extends Controller
         if (auth()->user()->role === 'teknisi') abort(403, 'Unauthorized');
 
         $validated = $request->validate([
-            'kategori' => 'required|in:PSB,Gangguan,Cabut Modem,Lainnya',
+            'kategori' => 'required|in:PSB,Gangguan,Cabut Modem,Lainnya,Ganti Password Wifi',
             'pelanggan_id' => 'nullable|exists:pelanggans,id',
             'nama_pelapor' => 'nullable|string|max:255',
             'no_hp' => 'nullable|string|max:20',
@@ -178,7 +181,7 @@ class TicketController extends Controller
         // --- Selesai Logika Anti-Race Condition ---
 
         $validated = $request->validate([
-            'kategori' => 'required|in:PSB,Gangguan,Cabut Modem,Lainnya',
+            'kategori' => 'required|in:PSB,Gangguan,Cabut Modem,Lainnya,Ganti Password Wifi',
             'pelanggan_id' => 'nullable|exists:pelanggans,id',
             'nama_pelapor' => 'nullable|string|max:255',
             'no_hp' => 'nullable|string|max:20',

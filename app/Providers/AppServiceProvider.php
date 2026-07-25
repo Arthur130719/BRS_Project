@@ -31,9 +31,26 @@ class AppServiceProvider extends ServiceProvider
                 $count = Cache::remember(
                     'notif_unread_' . auth()->id(),
                     30, // detik
-                    fn() => Notifikasi::where('is_read', false)->count()
+                    fn() => Notifikasi::where('is_read', false)
+                        ->where('type', '!=', 'chat')
+                        ->where(function($q) {
+                            $q->whereNull('target_role')
+                              ->orWhere('target_role', auth()->user()->role);
+                        })->count()
                 );
                 $view->with('notifUnreadCount', $count);
+                
+                $chatCount = Cache::remember(
+                    'chat_unread_' . auth()->id(),
+                    30, // detik
+                    fn() => Notifikasi::where('is_read', false)
+                        ->where('type', 'chat')
+                        ->where(function($q) {
+                            $q->whereNull('target_role')
+                              ->orWhere('target_role', auth()->user()->role);
+                        })->count()
+                );
+                $view->with('chatUnreadCount', $chatCount);
             } else {
                 $view->with('notifUnreadCount', 0);
             }

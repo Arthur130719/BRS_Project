@@ -168,8 +168,18 @@
     <div class="title">Informasi Pembayaran:</div>
     Harap melakukan pembayaran penuh sebelum tanggal jatuh tempo melalui transfer bank ke rekening berikut:<br>
     <ul style="margin-top: 8px; margin-left: 20px;">
-      <li><strong>BCA</strong>: 6280939267 a.n AISYAH NURUL ISTIQOMAH</li>
-      <li><strong>MANDIRI</strong>: 1760003390752 a.n BINA RAJA SOLUSI</li>
+      @php
+        $rekeningJson = \App\Models\SystemSetting::where('key', 'rekening_banks')->value('value');
+        $rekeningList = $rekeningJson ? json_decode($rekeningJson, true) : [];
+      @endphp
+      @if(is_array($rekeningList) && count($rekeningList) > 0)
+        @foreach($rekeningList as $rek)
+          <li><strong>{{ $rek['bank'] ?? 'BANK' }}</strong>: {{ $rek['norek'] ?? '' }} a.n {{ $rek['an'] ?? '' }}</li>
+        @endforeach
+      @else
+        <li><strong>BCA</strong>: 6280939267 a.n AISYAH NURUL ISTIQOMAH</li>
+        <li><strong>MANDIRI</strong>: 1760003390752 a.n BINA RAJA SOLUSI</li>
+      @endif
     </ul>
     <div style="margin-top:8px;">Jangan lupa menyertakan nomor invoice <strong>{{ $invoice->no_invoice }}</strong> pada keterangan transfer.</div>
     @else

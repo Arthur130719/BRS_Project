@@ -28,8 +28,10 @@ class PelangganController extends Controller
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(fn($q) => $q
-                ->where('nama', 'like', "%$s%")
-                ->orWhere('username_pppoe', 'like', "%$s%")
+                ->where('nama', 'like', "$s%")
+                ->orWhere('nama', 'like', "% $s%")
+                ->orWhere('username_pppoe', 'like', "$s%")
+                ->orWhere('username_pppoe', 'like', "% $s%")
                 ->orWhere('phone', 'like', "%$s%")
                 ->orWhere('ip_address', 'like', "%$s%")
             );
@@ -107,7 +109,24 @@ class PelangganController extends Controller
             'deskripsi' => 'PPPoE: ' . $pelanggan->username_pppoe . ' — Paket: ' . $pelanggan->paket?->nama,
         ]);
 
-        return redirect()->route('pelanggan.index')->with('success', 'Pelanggan berhasil ditambahkan.');
+        // ==========================================
+        // MIKROTIK INTEGRATION: Create PPPoE Secret
+        // ==========================================
+        if ($pelanggan->nas) {
+            $profileName = $pelanggan->paket ? ($pelanggan->paket->mikrotik_profile ?: $pelanggan->paket->nama) : 'default';
+            $success = $this->mikrotikService->addPppoeUser(
+                $pelanggan->nas, 
+                $pelanggan->username_pppoe, 
+                $pelanggan->password_pppoe, 
+                $profileName
+            );
+
+            if (!$success) {
+                return redirect()->route('pelanggan.index')->with('warning', 'Pelanggan berhasil disimpan ke database web, namun GAGAL ditambahkan ke MikroTik. Pastikan router menyala dan API terhubung.');
+            }
+        }
+
+        return redirect()->route('pelanggan.index')->with('success', 'Pelanggan berhasil ditambahkan ke web dan MikroTik.');
     }
 
     public function show(Pelanggan $pelanggan)
@@ -159,9 +178,34 @@ class PelangganController extends Controller
             $pelanggan->tokens()->delete();
         }
 
+        $oldUsername = $pelanggan->username_pppoe;
         $pelanggan->update($validated);
+        $pelanggan->refresh();
 
-        return redirect()->route('pelanggan.index')->with('success', 'Data pelanggan berhasil diperbarui.');
+        // ==========================================
+        // MIKROTIK INTEGRATION: Update PPPoE Secret
+        // ==========================================
+        if ($pelanggan->nas) {
+            $profileName = $pelanggan->paket ? ($pelanggan->paket->mikrotik_profile ?: $pelanggan->paket->nama) : 'default';
+            
+            // If they didn't provide a new password in the form, don't pass it to mikrotik (keep old)
+            // But if we want to sync, we might need the actual password. Let's pass the updated raw password if provided.
+            $password = $request->password_pppoe ?: null;
+            
+            $success = $this->mikrotikService->updatePppoeUser(
+                $pelanggan->nas,
+                $oldUsername,
+                $pelanggan->username_pppoe,
+                $password,
+                $profileName
+            );
+
+            if (!$success) {
+                return redirect()->route('pelanggan.index')->with('warning', 'Data pelanggan berhasil diperbarui di web, namun GAGAL disinkronisasi ke MikroTik.');
+            }
+        }
+
+        return redirect()->route('pelanggan.index')->with('success', 'Data pelanggan berhasil diperbarui di web dan MikroTik.');
     }
 
     public function destroy(Pelanggan $pelanggan)
@@ -169,8 +213,24 @@ class PelangganController extends Controller
         if (!auth()->user()->hasRole(['admin', 'kasir'])) {
             abort(403, 'Akses ditolak.');
         }
+
+        // ==========================================
+        // MIKROTIK INTEGRATION: Remove PPPoE Secret
+        // ==========================================
+        $nas = $pelanggan->nas;
+        $username = $pelanggan->username_pppoe;
+        
         $pelanggan->delete();
-        return redirect()->route('pelanggan.index')->with('success', 'Pelanggan berhasil dihapus.');
+
+        if ($nas) {
+            $success = $this->mikrotikService->removePppoeUser($nas, $username);
+            
+            if (!$success) {
+                return redirect()->route('pelanggan.index')->with('warning', 'Pelanggan berhasil dihapus dari web, tapi GAGAL dihapus dari MikroTik. Silakan hapus manual di Winbox.');
+            }
+        }
+
+        return redirect()->route('pelanggan.index')->with('success', 'Pelanggan berhasil dihapus dari web dan MikroTik.');
     }
 
     public function suspend(int $id)
@@ -238,5 +298,55 @@ class PelangganController extends Controller
         ]);
 
         return back()->with('success', 'Pelanggan ' . $pelanggan->nama . ' berhasil diaktifkan.');
+    }
+    public function liveSession(Pelanggan $pelanggan)
+    {
+        $cachedSessions = \Illuminate\Support\Facades\Cache::get('mikrotik_live_sessions', []);
+        
+        foreach ($cachedSessions as $session) {
+            if (isset($session['name']) && $session['name'] === $pelanggan->username_pppoe) {
+                return response()->json([
+                    'status' => 'online',
+                    'ip_address' => $session['address'] ?? '-',
+                    'uptime' => $session['uptime'] ?? '-',
+                    'download' => isset($session['tx-byte']) ? $this->formatBytes($session['tx-byte']) : '0 B',
+                    'upload' => isset($session['rx-byte']) ? $this->formatBytes($session['rx-byte']) : '0 B',
+                    'rate' => isset($session['tx-rate']) && isset($session['rx-rate']) ? 
+                              $this->formatRate($session['tx-rate']) . ' / ' . $this->formatRate($session['rx-rate']) : '-',
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 'offline',
+            'ip_address' => '-',
+            'uptime' => '-',
+            'download' => '0 B',
+            'upload' => '0 B',
+            'rate' => '0 bps / 0 bps'
+        ]);
+    }
+
+    private function formatBytes($bytes, $precision = 2)
+    {
+        $bytes = (float) $bytes;
+        if ($bytes <= 0) return '0 B';
+        $units = array('B', 'KB', 'MB', 'GB', 'TB');
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        $bytes /= (1 << (10 * $pow));
+        return round($bytes, $precision) . ' ' . $units[$pow];
+    }
+
+    private function formatRate($bps, $precision = 1)
+    {
+        $bps = (float) $bps;
+        if ($bps <= 0) return '0 bps';
+        $units = array('bps', 'Kbps', 'Mbps', 'Gbps');
+        $pow = floor(($bps ? log($bps) : 0) / log(1000));
+        $pow = min($pow, count($units) - 1);
+        $bps /= pow(1000, $pow);
+        return round($bps, $precision) . ' ' . $units[$pow];
     }
 }

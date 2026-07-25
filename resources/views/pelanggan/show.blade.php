@@ -169,6 +169,16 @@
                 <span class="key">Username PPPoE</span>
                 <span class="val mono">{{ $pelanggan->username_pppoe }}</span>
             </div>
+            <div class="info-row" x-data="{ show: false }">
+                <span class="key">Password PPPoE</span>
+                <span class="val mono" style="display:flex; align-items:center; gap:8px;">
+                    <span x-show="!show" style="letter-spacing:2px; font-size:10px; margin-top:2px;">••••••••</span>
+                    <span x-show="show" x-cloak>{{ $pelanggan->password_pppoe ?? '—' }}</span>
+                    <button @click="show = !show" class="btn btn-ghost" style="padding:0; min-height:0; height:auto; border:none; background:transparent; color:var(--text-4);">
+                        <i class="fas" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                    </button>
+                </span>
+            </div>
             <div class="info-row">
                 <span class="key">No. Telepon</span>
                 <span class="val">
@@ -225,9 +235,9 @@
                 <span class="key">IP Address</span>
                 <span class="val">
                     @if($pelanggan->ip_address)
-                        <span class="mono" style="color:#7dd3fc;">{{ $pelanggan->ip_address }}</span>
+                        <span id="ls-ip-address" class="mono" style="color:#7dd3fc;">{{ $pelanggan->ip_address }}</span>
                     @else
-                        <span class="mono-mute">—</span>
+                        <span id="ls-ip-address" class="mono-mute">—</span>
                     @endif
                 </span>
             </div>
@@ -279,155 +289,71 @@
         </div>
     </div>
 
-    {{-- ── RIGHT: ONU Status ── --}}
-    <div class="card">
-        <div class="card-header">
+    {{-- ── RIGHT: Live Session Status ── --}}
+    <div class="card" id="live-session-widget">
+        <div class="card-header" style="border-bottom:none; padding-bottom:0;">
             <div>
-                <div class="card-title"><i class="fas fa-wifi" style="margin-right:6px;color:var(--sky);"></i>Status ONU</div>
-                <div class="card-subtitle">Informasi perangkat optik pelanggan</div>
+                <div class="card-title"><i class="fas fa-shield-halved" style="margin-right:6px;color:var(--sky);"></i>Status Koneksi (Live)</div>
+                <div class="card-subtitle">Data real-time dari MikroTik</div>
             </div>
-            @if($pelanggan->onu)
-                @php
-                    $quality = $pelanggan->onu->signal_quality;
-                    $badgeClass = match($quality) {
-                        'excellent' => 'badge-active',
-                        'good'      => 'badge-online',
-                        'weak'      => 'badge-suspend',
-                        'poor'      => 'badge-inactive',
-                        default     => 'badge',
-                    };
-                    $badgeLabel = match($quality) {
-                        'excellent' => 'Excellent',
-                        'good'      => 'Good',
-                        'weak'      => 'Weak',
-                        'poor'      => 'Poor',
-                        default     => 'Unknown',
-                    };
-                @endphp
-                <span class="badge {{ $badgeClass }}">{{ $badgeLabel }}</span>
-            @endif
+            <span id="ls-badge" class="badge badge-inactive">Loading...</span>
         </div>
         <div class="card-body">
-            @if($pelanggan->onu)
-                @php
-                    $onu     = $pelanggan->onu;
-                    $quality = $onu->signal_quality;
-                    $bars    = ['excellent' => 4, 'good' => 3, 'weak' => 2, 'poor' => 1, 'unknown' => 0][$quality] ?? 0;
-                    $heights = ['8px','12px','16px','20px'];
-                @endphp
-
-                {{-- Signal bars visual --}}
-                <div style="display:flex;align-items:center;gap:14px;padding:16px 0 20px;border-bottom:1px solid rgba(51,65,85,0.4);margin-bottom:14px;">
-                    <div class="signal-bars">
-                        @for($b = 0; $b < 4; $b++)
-                            <div class="signal-bar {{ $b < $bars ? 'filled ' . $quality : '' }}"
-                                 style="height:{{ $heights[$b] }};width:5px;border-radius:1px;"></div>
-                        @endfor
-                    </div>
-                    <div>
-                        <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text-1);">
-                            {{ $onu->rx_power !== null ? number_format($onu->rx_power, 2) : '—' }}
-                            <span style="font-size:13px;color:var(--text-3);font-weight:400;">dBm</span>
-                        </div>
-                        <div style="font-size:11px;color:var(--text-4);margin-top:2px;">Rx Power (sinyal terima)</div>
-                    </div>
-                    <div style="margin-left:auto;">
-                        @if($onu->status === 'online')
-                            <span class="badge badge-online"><i class="fas fa-circle" style="font-size:6px;"></i> Online</span>
-                        @elseif($onu->status === 'offline')
-                            <span class="badge badge-offline"><i class="fas fa-circle" style="font-size:6px;"></i> Offline</span>
-                        @else
-                            <span class="badge badge-weak">{{ ucfirst($onu->status ?? '—') }}</span>
-                        @endif
-                    </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+                    <div style="font-size:10px; font-weight:600; color:var(--text-4); letter-spacing:1px; margin-bottom:4px;">UPTIME</div>
+                    <div id="ls-uptime" class="mono" style="font-size:15px; font-weight:700; color:var(--text-1);">--</div>
                 </div>
-
-                {{-- ONU Details --}}
-                <div class="info-row">
-                    <span class="key">Serial Number</span>
-                    <span class="val mono" style="color:#a5b4fc;">{{ $onu->serial_number ?? '—' }}</span>
+                <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+                    <div style="font-size:10px; font-weight:600; color:var(--text-4); letter-spacing:1px; margin-bottom:4px;">RATE</div>
+                    <div id="ls-rate" class="mono-mute" style="font-size:13px; font-weight:600; color:var(--text-2); margin-top:2px;">--</div>
                 </div>
-                <div class="info-row">
-                    <span class="key">Model</span>
-                    <span class="val">{{ $onu->model ?? '—' }}</span>
+                <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+                    <div style="font-size:10px; font-weight:600; color:var(--text-4); letter-spacing:1px; margin-bottom:4px;">DOWNLOAD</div>
+                    <div id="ls-download" class="mono" style="font-size:15px; font-weight:700; color:var(--green);">--</div>
                 </div>
-                <div class="info-row">
-                    <span class="key">Port OLT</span>
-                    <span class="val mono">
-                        @if($onu->port !== null)
-                            <span style="background:var(--indigo-dim);border:1px solid rgba(99,102,241,0.25);border-radius:4px;padding:1px 7px;color:#a5b4fc;">
-                                Port {{ $onu->port }}
-                            </span>
-                        @else
-                            —
-                        @endif
-                    </span>
+                <div style="background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;">
+                    <div style="font-size:10px; font-weight:600; color:var(--text-4); letter-spacing:1px; margin-bottom:4px;">UPLOAD</div>
+                    <div id="ls-upload" class="mono" style="font-size:15px; font-weight:700; color:var(--sky);">--</div>
                 </div>
-                <div class="info-row">
-                    <span class="key">Tx Power</span>
-                    <span class="val mono">
-                        {{ $onu->tx_power !== null ? number_format($onu->tx_power, 2) . ' dBm' : '—' }}
-                    </span>
-                </div>
-                <div class="info-row">
-                    <span class="key">Rx Power</span>
-                    <span class="val mono" style="color: {{ ($onu->rx_power ?? 0) >= -24 ? 'var(--green)' : (($onu->rx_power ?? 0) >= -27 ? 'var(--amber)' : 'var(--red)') }};">
-                        {{ $onu->rx_power !== null ? number_format($onu->rx_power, 2) . ' dBm' : '—' }}
-                    </span>
-                </div>
-                <div class="info-row">
-                    <span class="key">Signal Quality</span>
-                    <span class="val">
-                        @php
-                            $sqColor = match($quality) { 'excellent' => 'var(--green)', 'good' => 'var(--sky)', 'weak' => 'var(--amber)', default => 'var(--red)' };
-                        @endphp
-                        <span style="color:{{ $sqColor }};font-weight:600;font-size:12px;">{{ ucfirst($quality) }}</span>
-                    </span>
-                </div>
-                <div class="info-row">
-                    <span class="key">Uptime</span>
-                    <span class="val mono-mute">{{ $onu->uptime ?? '—' }}</span>
-                </div>
-                @if($pelanggan->olt)
-                <div class="info-row">
-                    <span class="key">OLT</span>
-                    <span class="val" style="font-size:12px;">
-                        {{ $pelanggan->olt->nama }}
-                        <span class="mono-mute">({{ $pelanggan->olt->ip_address }})</span>
-                    </span>
-                </div>
-                @endif
-
-                {{-- Rx Power bar --}}
-                @if($onu->rx_power !== null)
-                <div style="margin-top:16px;">
-                    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-4);margin-bottom:4px;">
-                        <span>Kualitas Sinyal</span>
-                        <span>{{ number_format($onu->rx_power, 1) }} dBm</span>
-                    </div>
-                    @php
-                        // Map -30..-15 dBm to 0-100%
-                        $pct = min(100, max(0, (($onu->rx_power + 30) / 15) * 100));
-                        $fillClass = $quality === 'excellent' ? 'green' : ($quality === 'good' ? 'green' : ($quality === 'weak' ? 'amber' : 'red'));
-                    @endphp
-                    <div class="progress-bar">
-                        <div class="progress-fill {{ $fillClass }}" style="width: {{ $pct }}%"></div>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-4);margin-top:3px;">
-                        <span>-30 dBm (Poor)</span>
-                        <span>-15 dBm (Excellent)</span>
-                    </div>
-                </div>
-                @endif
-
-            @else
-                <div class="empty-state" style="padding:32px 16px;">
-                    <i class="fas fa-wifi" style="color:var(--text-4);opacity:0.4;"></i>
-                    <h3>Tidak ada ONU</h3>
-                    <p>Pelanggan ini belum memiliki ONU yang terdaftar</p>
-                </div>
-            @endif
+            </div>
+            <div style="font-size:11px; color:var(--text-4); text-align:center; margin-top:16px;">
+                <i class="fas fa-rotate" style="margin-right:4px;"></i> Auto refresh setiap 1 detik
+            </div>
         </div>
+    </div>
+    
+    <script>
+        setInterval(() => {
+            fetch('{{ route('pelanggan.liveSession', $pelanggan->id) }}', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                let badge = document.getElementById('ls-badge');
+                if (data.status === 'online') {
+                    badge.className = 'badge badge-online';
+                    badge.innerHTML = '<i class="fas fa-circle" style="font-size:6px;"></i> Online';
+                } else {
+                    badge.className = 'badge badge-offline';
+                    badge.innerHTML = '<i class="fas fa-circle" style="font-size:6px;"></i> Offline';
+                }
+                document.getElementById('ls-uptime').innerText = data.uptime;
+                document.getElementById('ls-download').innerText = data.download;
+                document.getElementById('ls-upload').innerText = data.upload;
+                document.getElementById('ls-rate').innerText = data.rate;
+                
+                if (data.status === 'online' && data.ip_address !== '-') {
+                    document.getElementById('ls-ip-address').innerText = data.ip_address;
+                    document.getElementById('ls-ip-address').style.color = 'var(--text-1)';
+                } else {
+                    document.getElementById('ls-ip-address').innerText = '{{ $pelanggan->ip_address ?? '—' }}';
+                    document.getElementById('ls-ip-address').style.color = '';
+                }
+            })
+            .catch(err => console.error("Error fetching live session", err));
+        }, 1000);
+    </script>
     </div>
 
 </div>

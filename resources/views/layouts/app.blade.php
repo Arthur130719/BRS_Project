@@ -283,9 +283,78 @@ body {
 .top-nav {
   display: flex;
   align-items: center;
-  padding: 0 24px 10px; /* added a bit of bottom padding */
+  padding: 0 24px 10px;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+/* ── Mobile Hamburger Menu ── */
+.hamburger-btn {
+  display: none;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 16px;
+  align-items: center;
+  gap: 6px;
+}
+.mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+.mobile-nav-panel {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: #1a1f2e;
+  border-bottom: 2px solid rgba(59,130,246,0.3);
+  z-index: 1001;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.mobile-nav-panel.open { display: block; }
+.mob-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: #141824;
+}
+.mob-nav-header span { font-weight: 700; color: #fff; font-size: 15px; }
+.mob-nav-header button { background:none;border:none;color:#aaa;font-size:24px;cursor:pointer;line-height:1;padding:0; }
+.mobile-nav-panel a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 20px;
+  color: #c9d1e0;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s, color 0.15s;
+}
+.mobile-nav-panel a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.mobile-nav-panel a.active { background: rgba(59,130,246,0.15); color: #60a5fa; border-left: 3px solid #3b82f6; }
+.mobile-nav-panel a i { width: 18px; text-align: center; font-size: 14px; }
+.mob-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 14px 20px 6px;
+  background: rgba(0,0,0,0.2);
 }
 
 .nav-item {
@@ -745,41 +814,36 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
 /* ── Mobile Responsive ── */
 @media (max-width: 768px) {
   .header-main { 
-    display: grid;
-    grid-template-columns: 1fr auto auto auto;
-    row-gap: 12px;
-    column-gap: 8px;
-    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
   }
-  .header-right { display: contents; } /* Unbox header-right to layout children directly in grid */
-  .header-left { grid-column: 1 / 2; grid-row: 1; display: flex; align-items: center; }
-  .icon-btn { grid-column: 2 / 3; grid-row: 1; }
-  .header-user { grid-column: 3 / 4; grid-row: 1; }
-  .logout-btn { grid-column: 4 / 5; grid-row: 1; }
+  .header-left { flex: 1; }
+  .header-right { display: contents; }
   
-  .search-wrap-container { grid-column: 1 / -1; grid-row: 2; width: 100%; display: block; }
+  /* Ikon-ikon di header berjejer kanan */
+  button[title="Ubah Tema"] { order: 2; }
+  .notif-icons-group { order: 3; display:flex; align-items:center; gap:6px; }
+  .header-user { order: 4; }
+  .logout-btn { order: 5; }
+  
+  .search-wrap-container { order: 6; width: 100%; flex-basis: 100%; }
   .search-wrap { width: 100%; }
-  .search-wrap input { width: 100%; }
   
-  .user-info { display: none; } /* Hide user text, keep avatar */
-  .logo-sub { display: none; } /* Simplify logo */
-  
-  .top-nav { 
-    padding: 0 12px 12px; 
-    justify-content: center; 
-    flex-wrap: wrap; 
-    gap: 6px;
-  }
-  .nav-item { 
-    padding: 6px 10px; 
-    font-size: 11.5px; 
-    white-space: nowrap; 
-    flex-shrink: 0;
-  }
-  .nav-item i { margin-right: 4px; } 
+  .user-info { display: none; }
+  .logo-sub { display: none; }
+
+  /* Sembunyikan top-nav di mobile, ganti hamburger */
+  .top-nav { display: none !important; }
+  .hamburger-btn { display: flex; align-items: center; justify-content: center; }
   
   .page-content-wrapper { padding: 16px 12px 30px; }
   .page-header { flex-direction: column; align-items: flex-start; }
+  
+  /* Sembunyikan elemen desktop-only di mobile */
+  .desktop-only { display: none !important; }
   
   /* Dropdowns adjustments for mobile centering */
   .dropdown-menu { left: 50%; transform: translateX(-50%) translateY(10px); min-width: 180px; }
@@ -830,12 +894,25 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
           <i class="fas" :class="isDark ? 'fa-sun' : 'fa-moon'"></i>
         </button>
         
-        <a href="{{ route('notifikasi.index') }}" class="icon-btn">
-          <i class="fas fa-bell"></i>
-          @if(!empty($notifUnreadCount))
-            <span class="notif-badge">{{ min($notifUnreadCount, 99) }}</span>
-          @endif
-        </a>
+        <div class="notif-icons-group" style="display:flex; align-items:center; gap:6px; margin-right:4px;">
+          <a href="{{ route('notifikasi.index', ['type' => 'chat']) }}" class="icon-btn" id="chat-icon-btn">
+            <i class="fas fa-comments"></i>
+            @if(isset($chatUnreadCount) && $chatUnreadCount > 0)
+              <span class="notif-badge" style="background-color: #3b82f6;">{{ $chatUnreadCount > 99 ? '99' : $chatUnreadCount }}</span>
+            @endif
+          </a>
+          <a href="{{ route('notifikasi.index') }}" class="icon-btn" id="bell-icon-btn">
+            <i class="fas fa-bell"></i>
+            @if(isset($notifUnreadCount) && $notifUnreadCount > 0)
+              <span class="notif-badge">{{ $notifUnreadCount > 99 ? '99' : $notifUnreadCount }}</span>
+            @endif
+          </a>
+        </div>{{-- end notif-icons-group --}}
+
+        {{-- Hamburger button (mobile only) --}}
+        <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileNav()" title="Menu">
+          <i class="fas fa-bars"></i>
+        </button>
         
         <div class="header-user">
           <div class="user-avatar {{ auth()->user()->role }}">
@@ -875,6 +952,12 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
       
       <a href="{{ route('tickets.index') }}" class="nav-item {{ request()->routeIs('tickets.*') ? 'active' : '' }}">
         <i class="fas fa-clipboard-list"></i> Job Order
+        @php
+            $ticketQ = \App\Models\Ticket::where('status', 'Pending');
+            if (auth()->user()->role === 'teknisi') $ticketQ->where('teknisi_id', auth()->id());
+            $pTicketCount = $ticketQ->count();
+        @endphp
+        @if($pTicketCount) <span class="nav-badge orange ticket-badge" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.2); color: #fcd34d; font-size: 10px; font-weight: bold;">{{ $pTicketCount }}</span> @endif
       </a>
 
       @if(auth()->user()->hasRole(['admin','kasir']))
@@ -897,9 +980,7 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
             @php $onlineCount = \App\Models\RadiusSession::count(); @endphp
             @if($onlineCount) <span class="nav-badge green">{{ $onlineCount }}</span> @endif
           </a>
-          <a href="{{ route('olt.index') }}" class="dropdown-item {{ request()->routeIs('olt.*') ? 'active' : '' }}">
-            <i class="fas fa-sitemap"></i> OLT & ONU
-          </a>
+
           <a href="{{ route('nas.index') }}" class="dropdown-item {{ request()->routeIs('nas.*') ? 'active' : '' }}">
             <i class="fas fa-server"></i> NAS Router
           </a>
@@ -962,8 +1043,124 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
           @endif
         </div>
       </div>
+
+      <!-- Tombol Pengaturan Suara (hidden on mobile) -->
+      <div class="dropdown-wrap desktop-only" tabindex="0" style="margin-left: auto;" id="notif-sound-dropdown">
+        <div class="nav-item" style="color: #60a5fa; border: 1px solid #3b82f6; border-radius: 6px; padding: 4px 10px;">
+          <i class="fas fa-volume-up"></i> Suara <i class="fas fa-chevron-down" style="font-size: 10px; margin-left: 2px;"></i>
+        </div>
+        <div class="dropdown-menu" style="right: 0; left: auto; min-width: 220px;">
+          <a href="javascript:void(0)" onclick="window.setNotificationSound('mute')" class="dropdown-item sound-option" data-sound="mute">
+            <i class="fas fa-volume-xmark" style="width: 20px; color: #ef4444;"></i> Mute (Hening) <i class="fas fa-check check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 6px 0;"></div>
+          <a href="javascript:void(0)" onclick="window.setNotificationSound('glass')" class="dropdown-item sound-option" data-sound="glass">
+            <i class="fas fa-bell" style="width: 20px;"></i> Glass (iOS Modern) <i class="fas fa-check check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <a href="javascript:void(0)" onclick="window.setNotificationSound('tritone')" class="dropdown-item sound-option" data-sound="tritone">
+            <i class="fas fa-music" style="width: 20px;"></i> Tri-tone (iOS Klasik) <i class="fas fa-check check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <a href="javascript:void(0)" onclick="window.setNotificationSound('pop')" class="dropdown-item sound-option" data-sound="pop">
+            <i class="fas fa-comment-dots" style="width: 20px;"></i> Soft Pop (Minimalis) <i class="fas fa-check check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <a href="javascript:void(0)" onclick="window.setNotificationSound('chime')" class="dropdown-item sound-option" data-sound="chime">
+            <i class="fas fa-wand-magic-sparkles" style="width: 20px;"></i> Magic Chime <i class="fas fa-check check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <a href="javascript:void(0)" onclick="window.setNotificationSound('pluck')" class="dropdown-item sound-option" data-sound="pluck">
+            <i class="fas fa-guitar" style="width: 20px;"></i> String Pluck <i class="fas fa-check check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Tombol Pengaturan Suara Chat (hidden on mobile) -->
+      <div class="dropdown-wrap desktop-only" tabindex="0" style="margin-left: 10px;" id="chat-sound-dropdown">
+        <div class="nav-item" style="color: #4ade80; border: 1px solid #22c55e; border-radius: 6px; padding: 4px 10px;">
+          <i class="fas fa-comment-dots"></i> Suara Chat <i class="fas fa-chevron-down" style="font-size: 10px; margin-left: 2px;"></i>
+        </div>
+        <div class="dropdown-menu" style="right: 0; left: auto; min-width: 220px;">
+          <a href="javascript:void(0)" onclick="window.setChatSound('mute')" class="dropdown-item chat-sound-option" data-sound="mute">
+            <i class="fas fa-volume-xmark" style="width: 20px; color: #ef4444;"></i> Mute (Hening) <i class="fas fa-check chat-check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 6px 0;"></div>
+          <a href="javascript:void(0)" onclick="window.setChatSound('glass')" class="dropdown-item chat-sound-option" data-sound="glass">
+            <i class="fas fa-bell" style="width: 20px;"></i> Glass (iOS Modern) <i class="fas fa-check chat-check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <a href="javascript:void(0)" onclick="window.setChatSound('tritone')" class="dropdown-item chat-sound-option" data-sound="tritone">
+            <i class="fas fa-music" style="width: 20px;"></i> Tri-tone (iOS Klasik) <i class="fas fa-check chat-check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <a href="javascript:void(0)" onclick="window.setChatSound('pop')" class="dropdown-item chat-sound-option" data-sound="pop">
+            <i class="fas fa-comment-dots" style="width: 20px;"></i> Soft Pop (Minimalis) <i class="fas fa-check chat-check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <a href="javascript:void(0)" onclick="window.setChatSound('chime')" class="dropdown-item chat-sound-option" data-sound="chime">
+            <i class="fas fa-wand-magic-sparkles" style="width: 20px;"></i> Magic Chime <i class="fas fa-check chat-check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+          <a href="javascript:void(0)" onclick="window.setChatSound('pluck')" class="dropdown-item chat-sound-option" data-sound="pluck">
+            <i class="fas fa-guitar" style="width: 20px;"></i> String Pluck <i class="fas fa-check chat-check-icon" style="display:none; float:right; margin-top: 4px; color: var(--primary);"></i>
+          </a>
+        </div>
+      </div>
     </nav>
   </header>
+
+  {{-- ── MOBILE NAV PANEL (hidden on desktop) ── --}}
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+  <div class="mobile-nav-panel" id="mobile-nav-panel">
+    <div class="mob-nav-header">
+      <span><i class="fas fa-bars" style="margin-right:8px; color:#3b82f6;"></i>Menu Navigasi</span>
+      <button onclick="closeMobileNav()">&times;</button>
+    </div>
+
+    <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="fas fa-gauge-high" style="width:20px"></i> Dashboard</a>
+
+    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'kasir')
+    <a href="{{ route('pelanggan.index') }}" class="{{ request()->routeIs('pelanggan.*') ? 'active' : '' }}"><i class="fas fa-users" style="width:20px"></i> Pelanggan</a>
+    <a href="{{ route('permohonan.index') }}" class="{{ request()->routeIs('permohonan.*') ? 'active' : '' }}"><i class="fas fa-user-plus" style="width:20px"></i> Permohonan Baru</a>
+    @endif
+
+    <a href="{{ route('tickets.index') }}" class="{{ request()->routeIs('tickets.*') ? 'active' : '' }}"><i class="fas fa-clipboard-list" style="width:20px"></i> Job Order</a>
+
+    @if(auth()->user()->hasRole(['admin','kasir']))
+    <a href="{{ route('support-tickets.index') }}" class="{{ request()->routeIs('support-tickets.*') ? 'active' : '' }}"><i class="fas fa-headset" style="width:20px"></i> Aduan Pelanggan</a>
+    @endif
+
+    @if(auth()->user()->hasRole(['admin','teknisi']))
+    <div class="mob-section-title">Jaringan</div>
+    <a href="{{ route('radius.index') }}" class="{{ request()->routeIs('radius.*') ? 'active' : '' }}"><i class="fas fa-circle-dot" style="width:20px"></i> RADIUS</a>
+
+    <a href="{{ route('nas.index') }}" class="{{ request()->routeIs('nas.*') ? 'active' : '' }}"><i class="fas fa-server" style="width:20px"></i> NAS Router</a>
+    @endif
+
+    @if(auth()->user()->hasRole(['admin','kasir']))
+    <div class="mob-section-title">Keuangan</div>
+    <a href="{{ route('invoice.index') }}" class="{{ request()->routeIs('invoice.*') ? 'active' : '' }}"><i class="fas fa-file-invoice-dollar" style="width:20px"></i> Invoice</a>
+    <a href="{{ route('pembayaran.index') }}" class="{{ request()->routeIs('pembayaran.*') ? 'active' : '' }}"><i class="fas fa-money-bill-transfer" style="width:20px"></i> Pembayaran</a>
+    <a href="{{ route('isolir.log') }}" class="{{ request()->routeIs('isolir.*') ? 'active' : '' }}"><i class="fas fa-lock" style="width:20px"></i> Log Isolir</a>
+    @endif
+
+    <div class="mob-section-title">Sistem</div>
+    <a href="{{ route('notifikasi.index') }}" class="{{ request()->routeIs('notifikasi.*') ? 'active' : '' }}"><i class="fas fa-bell" style="width:20px"></i> Notifikasi</a>
+    <a href="{{ route('bantuan.index') }}" class="{{ request()->routeIs('bantuan.*') ? 'active' : '' }}"><i class="fas fa-circle-question" style="width:20px"></i> Bantuan</a>
+
+    @if(auth()->user()->isAdmin())
+    <a href="{{ route('pengguna.index') }}" class="{{ request()->routeIs('pengguna.*') ? 'active' : '' }}"><i class="fas fa-users-gear" style="width:20px"></i> Pengguna</a>
+    <a href="{{ route('paket.index') }}" class="{{ request()->routeIs('paket.*') ? 'active' : '' }}"><i class="fas fa-boxes-stacked" style="width:20px"></i> Paket Layanan</a>
+    <a href="{{ route('pengaturan.index') }}" class="{{ request()->routeIs('pengaturan.*') ? 'active' : '' }}"><i class="fas fa-sliders" style="width:20px"></i> Pengaturan</a>
+    <a href="{{ route('activity_log.index') }}" class="{{ request()->routeIs('activity_log.*') ? 'active' : '' }}"><i class="fas fa-list-check" style="width:20px"></i> Log Aktivitas</a>
+    @endif
+  </div>
+
+  <script>
+    function toggleMobileNav() {
+      const panel = document.getElementById('mobile-nav-panel');
+      const overlay = document.getElementById('mobile-nav-overlay');
+      panel.classList.toggle('open');
+      overlay.style.display = panel.classList.contains('open') ? 'block' : 'none';
+    }
+    function closeMobileNav() {
+      document.getElementById('mobile-nav-panel').classList.remove('open');
+      document.getElementById('mobile-nav-overlay').style.display = 'none';
+    }
+  </script>
 
   <!-- ── MAIN CONTENT ── -->
   <div class="page-content-wrapper">
@@ -1127,6 +1324,9 @@ if ('serviceWorker' in navigator) {
   setInterval(function() {
     idleTime++;
     if (idleTime >= idleTimeout) {
+      // Set flag for login page
+      localStorage.setItem('auto_logout_msg', 'Sesi Anda telah habis secara otomatis karena tidak ada aktivitas selama 30 menit. Silakan login kembali.');
+      
       // Auto logout form submit
       const form = document.createElement('form');
       form.method = 'POST';
@@ -1157,65 +1357,225 @@ if ('serviceWorker' in navigator) {
 (function() {
   let lastNotifId = null;
   let lastTicketTime = null;
+  let lastPermohonanTime = null;
   const isTicketsPage = window.location.pathname.includes('/tickets');
+  const isPermohonanPage = window.location.pathname.includes('/permohonan');
 
   // Insert keyframes for toast
   const style = document.createElement('style');
   style.innerHTML = `@keyframes slideUpToast { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`;
   document.head.appendChild(style);
 
-  // Audio instance global agar bisa di-unlock
-  const notifAudio = new Audio('{{ asset("audio/notif.mp3") }}');
+  // ═══ WEB AUDIO API SYNTHESIZER (MODERN POP) ═══
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = new AudioContext();
 
-  // Trick untuk membuka blokir Auto-play di HP (Safari/Chrome Mobile)
-  // Harus ada 1x interaksi user (klik/sentuh) sebelum audio diizinkan bermain sendiri
-  let audioUnlocked = false;
   document.body.addEventListener('click', function() {
-      if (!audioUnlocked) {
-          notifAudio.volume = 0; // Mainkan tanpa suara dulu
-          notifAudio.play().then(() => {
-              notifAudio.pause();
-              notifAudio.currentTime = 0;
-              notifAudio.volume = 1; // Kembalikan volume normal
-              audioUnlocked = true;
-          }).catch(e => console.log('Audio unlock failed', e));
-      }
-  }, { once: true });
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }, { once: false });
 
-  function playNotificationSound() {
+  window.setNotificationSound = function(type) {
+    localStorage.setItem('brs_notif_sound', type);
+    
+    // Update indikator UI (tanda centang)
+    document.querySelectorAll('.sound-option .check-icon').forEach(el => el.style.display = 'none');
+    const activeItem = document.querySelector(`.sound-option[data-sound="${type}"] .check-icon`);
+    if (activeItem) activeItem.style.display = 'block';
+    
+    window.playNotificationSound(type);
+    
+    // Beri tahu user bahwa berhasil diganti
+    if (typeof showToast === 'function') {
+      showToast("Nada dering berhasil diubah!", "success", "", "mute");
+    }
+  };
+
+  window.setChatSound = function(type) {
+    localStorage.setItem('brs_chat_sound', type);
+    
+    // Update indikator UI (tanda centang)
+    document.querySelectorAll('.chat-sound-option .chat-check-icon').forEach(el => el.style.display = 'none');
+    const activeItem = document.querySelector(`.chat-sound-option[data-sound="${type}"] .chat-check-icon`);
+    if (activeItem) activeItem.style.display = 'block';
+    
+    window.playNotificationSound(type);
+    
+    // Beri tahu user bahwa berhasil diganti
+    if (typeof showToast === 'function') {
+      showToast("Nada dering chat berhasil diubah!", "success", "", "mute");
+    }
+  };
+
+  // Set initial checkmark saat halaman dimuat
+  document.addEventListener('DOMContentLoaded', () => {
+    const currentSound = localStorage.getItem('brs_notif_sound') || 'glass';
+    const activeItem = document.querySelector(`.sound-option[data-sound="${currentSound}"] .check-icon`);
+    if (activeItem) activeItem.style.display = 'block';
+    
+    const currentChatSound = localStorage.getItem('brs_chat_sound') || 'pop';
+    const activeChatItem = document.querySelector(`.chat-sound-option[data-sound="${currentChatSound}"] .chat-check-icon`);
+    if (activeChatItem) activeChatItem.style.display = 'block';
+  });
+
+  window.playNotificationSound = function(forceType = null) {
     try {
-        // Reset waktu ke awal jika sedang dimainkan, lalu play
-        notifAudio.currentTime = 0;
-        notifAudio.play().catch(e => console.log('Audio autoplay blocked'));
+      const soundType = forceType || localStorage.getItem('brs_notif_sound') || 'glass';
+      
+      // Jika mode Mute terpilih, jangan bunyikan apa-apa
+      if (soundType === 'mute') return;
+      
+      const requestTime = Date.now();
+      
+      const playNow = () => {
+          const playNote = (freq, startTime, duration, type='sine') => {
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.type = type;
+              osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
+              gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + startTime + 0.01);
+              gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
+              osc.connect(gain); gain.connect(audioCtx.destination);
+              osc.start(audioCtx.currentTime + startTime); osc.stop(audioCtx.currentTime + startTime + duration);
+          };
+
+          if (soundType === 'tritone') {
+              // Tri-tone klasik iPhone
+              playNote(987.77,  0.00, 0.3); // B5
+              playNote(1318.51, 0.15, 0.3); // E6
+              playNote(1108.73, 0.30, 0.6); // C#6
+              
+          } else if (soundType === 'pop') {
+              // Soft Pop singkat
+              playNote(800, 0, 0.1);
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+              osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+              gain.gain.setValueAtTime(0, audioCtx.currentTime);
+              gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+              osc.connect(gain); gain.connect(audioCtx.destination);
+              osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.2);
+              
+          } else if (soundType === 'chime') {
+              // Magic Chime (4 nada menaik)
+              playNote(523.25, 0.00, 0.3); // C5
+              playNote(659.25, 0.10, 0.3); // E5
+              playNote(783.99, 0.20, 0.3); // G5
+              playNote(1046.50, 0.30, 0.6); // C6
+              
+          } else if (soundType === 'pluck') {
+              // String Pluck pendek
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.value = 600;
+              osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+              gain.gain.setValueAtTime(0, audioCtx.currentTime);
+              gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.01);
+              gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+              osc.connect(gain); gain.connect(audioCtx.destination);
+              osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.2);
+              
+          } else {
+              // Glass / Bell (default)
+              const playBell = (freq, startTime, duration) => {
+                  const gain = audioCtx.createGain();
+                  const osc1 = audioCtx.createOscillator();
+                  const osc2 = audioCtx.createOscillator();
+                  const osc3 = audioCtx.createOscillator();
+                  osc1.type = 'sine'; osc2.type = 'sine'; osc3.type = 'sine';
+                  osc1.frequency.value = freq;
+                  osc2.frequency.value = freq * 2.01;
+                  osc3.frequency.value = freq * 3.02;
+                  const gain1 = audioCtx.createGain(); gain1.gain.value = 1.0;
+                  const gain2 = audioCtx.createGain(); gain2.gain.value = 0.3;
+                  const gain3 = audioCtx.createGain(); gain3.gain.value = 0.1;
+                  osc1.connect(gain1); gain1.connect(gain);
+                  osc2.connect(gain2); gain2.connect(gain);
+                  osc3.connect(gain3); gain3.connect(gain);
+                  gain.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
+                  gain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + startTime + 0.01);
+                  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
+                  gain.connect(audioCtx.destination);
+                  osc1.start(audioCtx.currentTime + startTime); osc1.stop(audioCtx.currentTime + startTime + duration);
+                  osc2.start(audioCtx.currentTime + startTime); osc2.stop(audioCtx.currentTime + startTime + duration);
+                  osc3.start(audioCtx.currentTime + startTime); osc3.stop(audioCtx.currentTime + startTime + duration);
+              };
+              playBell(880.00,  0.0, 0.5); 
+              playBell(1108.73, 0.1, 0.8);
+          }
+      };
+
+      if (audioCtx.state === 'running') {
+          playNow();
+      } else {
+          // Coba resume (Browser mungkin memblokir ini jika tidak ada klik dari user)
+          audioCtx.resume().then(() => {
+              // Jika berhasil resume dalam waktu kurang dari 2 detik, bunyikan!
+              // Jika lebih dari 2 detik (misal user baru klik menu beberapa menit kemudian), batalkan agar tidak "meledak" telat.
+              if (Date.now() - requestTime < 2000) {
+                  playNow();
+              } else {
+                  console.log('Suara notifikasi dibatalkan karena jeda autoplay terlalu lama.');
+              }
+          }).catch(e => console.log('Gagal resume audio', e));
+      }
+
     } catch (e) {
-        console.log('Error playing audio');
+      console.log('Error memutar synthesizer', e);
     }
   }
 
-  function showToast(message, type = 'info', actionHtml = '') {
-    playNotificationSound(); // Mainkan suara saat toast muncul
+  function showToast(message, type = 'info', actionHtml = '', forceSound = null, toastId = null) {
+    playNotificationSound(forceSound);
 
     const container = document.getElementById('live-toast-container') || (function() {
       const c = document.createElement('div');
       c.id = 'live-toast-container';
-      c.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;';
+      c.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;max-width:350px;';
       document.body.appendChild(c);
       return c;
     })();
 
+    if (toastId) {
+      const existing = document.getElementById(toastId);
+      if (existing) existing.remove();
+    }
+
+    // Limit max 3 toasts to prevent screen clutter
+    while (container.children.length >= 3) {
+      container.removeChild(container.firstChild);
+    }
+
     const toast = document.createElement('div');
+    if (toastId) toast.id = toastId;
     const bg = type === 'warning' ? '#f59e0b' : (type === 'danger' ? '#ef4444' : '#3b82f6');
-    toast.style.cssText = `background:${bg};color:white;padding:12px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:slideUpToast 0.3s ease-out;display:flex;align-items:center;gap:10px;font-family:sans-serif;font-size:14px;`;
-    toast.innerHTML = `<span>${message}</span> ${actionHtml}`;
+    toast.style.cssText = `background:${bg};color:white;padding:12px 16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:slideUpToast 0.3s ease-out;display:flex;align-items:center;gap:10px;font-family:sans-serif;font-size:13px;line-height:1.4;`;
+    toast.innerHTML = `<span style="flex:1;">${message}</span> ${actionHtml}`;
     container.appendChild(toast);
 
-    if (!actionHtml) {
-      setTimeout(() => {
+    // Tombol close (silang) selalu ada
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.style.cssText = 'background:transparent;border:none;color:white;font-size:20px;cursor:pointer;opacity:0.7;margin-left:8px;padding:0 4px;';
+    closeBtn.onclick = () => { toast.remove(); };
+    toast.appendChild(closeBtn);
+
+    // Semua toast hilang otomatis dalam 6 detik
+    setTimeout(() => {
+      if (toast.parentNode) {
         toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.5s';
-        setTimeout(() => toast.remove(), 500);
-      }, 5000);
-    }
+        toast.style.transition = 'opacity 0.4s';
+        setTimeout(() => {
+          if (toast.parentNode) toast.remove();
+        }, 400);
+      }
+    }, 6000);
   }
 
   function fetchUpdates() {
@@ -1227,36 +1587,94 @@ if ('serviceWorker' in navigator) {
     })
     .then(res => res.json())
     .then(data => {
-      // Update badge
-      const iconBtn = document.querySelector('.icon-btn[href*="notifikasi"]');
-      let badge = iconBtn ? iconBtn.querySelector('.notif-badge') : null;
+      // Update badge bell
+      const bellIconBtn = document.getElementById('bell-icon-btn') || document.querySelector('.icon-btn[href*="notifikasi"]:not([href*="type="])');
+      let bellBadge = bellIconBtn ? bellIconBtn.querySelector('.notif-badge') : null;
       
       if (data.unread_count > 0) {
-        if (badge) {
-          badge.textContent = data.unread_count > 99 ? '99' : data.unread_count;
-        } else if (iconBtn) {
-          iconBtn.innerHTML += `<span class="notif-badge">${data.unread_count > 99 ? '99' : data.unread_count}</span>`;
+        if (bellBadge) {
+          bellBadge.textContent = data.unread_count > 99 ? '99' : data.unread_count;
+        } else if (bellIconBtn) {
+          bellIconBtn.innerHTML += `<span class="notif-badge">${data.unread_count > 99 ? '99' : data.unread_count}</span>`;
         }
-      } else if (badge) {
-        badge.remove();
+      } else if (bellBadge) {
+        bellBadge.remove();
       }
 
-      // Check new notification
-      if (lastNotifId === null) {
-        lastNotifId = data.latest_notif_id;
-      } else if (data.latest_notif_id > lastNotifId) {
-        lastNotifId = data.latest_notif_id;
-        showToast(`🔔 Notifikasi Baru: ${data.latest_notif_title}`, data.latest_notif_type);
+      // Update badge chat
+      const chatIconBtn = document.getElementById('chat-icon-btn');
+      let chatBadge = chatIconBtn ? chatIconBtn.querySelector('.notif-badge') : null;
+      
+      if (data.chat_unread_count > 0) {
+        if (chatBadge) {
+          chatBadge.textContent = data.chat_unread_count > 99 ? '99' : data.chat_unread_count;
+        } else if (chatIconBtn) {
+          chatIconBtn.innerHTML += `<span class="notif-badge" style="background-color: #3b82f6;">${data.chat_unread_count > 99 ? '99' : data.chat_unread_count}</span>`;
+        }
+      } else if (chatBadge) {
+        chatBadge.remove();
       }
 
-      // Check new ticket update
+      // Check new bell notification
+      if (typeof window.lastNotifTime === 'undefined') {
+        window.lastNotifTime = data.latest_notif_time;
+      } else if (data.latest_notif_time > window.lastNotifTime) {
+        window.lastNotifTime = data.latest_notif_time;
+        let actionBtn = data.latest_notif_url ? `<button onclick="window.location.href='${data.latest_notif_url}'" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;margin-left:auto;">Buka</button>` : '';
+        showToast(`🔔 Notifikasi Baru: ${data.latest_notif_title}`, data.latest_notif_type, actionBtn, null, 'toast-bell');
+      }
+      
+      // Check new chat notification
+      if (typeof window.lastChatTime === 'undefined') {
+        window.lastChatTime = data.latest_chat_time;
+      } else if (data.latest_chat_time > window.lastChatTime) {
+        window.lastChatTime = data.latest_chat_time;
+        let actionBtn = data.latest_chat_url ? `<button onclick="window.location.href='${data.latest_chat_url}'" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;margin-left:auto;">Balas</button>` : '';
+        const chatSound = localStorage.getItem('brs_chat_sound') || 'pop';
+        showToast(`💬 ${data.latest_chat_title}`, 'info', actionBtn, chatSound, 'toast-chat');
+      }
+
+      // ── Update Permohonan Badge & Notify ──
+      const permohonanBtn = document.querySelector('.nav-item[href*="permohonan"]');
+      let permohonanBadge = permohonanBtn ? permohonanBtn.querySelector('.nav-badge') : null;
+      if (data.pending_permohonan_count > 0) {
+        if (permohonanBadge) {
+          permohonanBadge.textContent = data.pending_permohonan_count;
+        } else if (permohonanBtn) {
+          permohonanBtn.innerHTML += `<span class="nav-badge red" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(239,68,68,0.2); color: #fca5a5; font-size: 10px; font-weight: bold;">${data.pending_permohonan_count}</span>`;
+        }
+      } else if (permohonanBadge) {
+        permohonanBadge.remove();
+      }
+
+      if (lastPermohonanTime === null) {
+        lastPermohonanTime = data.latest_permohonan_time;
+      } else if (data.latest_permohonan_time > 0 && data.latest_permohonan_time > lastPermohonanTime) {
+        lastPermohonanTime = data.latest_permohonan_time;
+        showToast(`👤 Ada Permohonan Pemasangan Baru!`, 'info', `<button onclick="window.location.href='/permohonan'" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Lihat</button>`);
+        if (isPermohonanPage) setTimeout(() => window.location.reload(), 2500);
+      }
+
+      // ── Update Job Order Badge ──
+      const ticketBtn = document.querySelector('.nav-item[href*="tickets"]');
+      let ticketBadge = ticketBtn ? ticketBtn.querySelector('.ticket-badge') : null;
+      if (data.pending_ticket_count > 0) {
+        if (ticketBadge) {
+          ticketBadge.textContent = data.pending_ticket_count;
+        } else if (ticketBtn) {
+          ticketBtn.innerHTML += `<span class="nav-badge orange ticket-badge" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.2); color: #fcd34d; font-size: 10px; font-weight: bold;">${data.pending_ticket_count}</span>`;
+        }
+      } else if (ticketBadge) {
+        ticketBadge.remove();
+      }
+
+      // ── Check new Job Order (Ticket) update globally ──
       if (lastTicketTime === null) {
         lastTicketTime = data.latest_ticket_time;
-      } else if (data.latest_ticket_time > lastTicketTime) {
+      } else if (data.latest_ticket_time > 0 && data.latest_ticket_time > lastTicketTime) {
         lastTicketTime = data.latest_ticket_time;
-        if (isTicketsPage) {
-          showToast(`🛠️ Papan Job Order telah berubah.`, 'info', `<button onclick="window.location.reload()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Muat Ulang</button>`);
-        }
+        showToast(`🛠️ Ada Job Order Baru / Diperbarui!`, 'warning', `<button onclick="window.location.href='/tickets'" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Lihat</button>`);
+        if (isTicketsPage) setTimeout(() => window.location.reload(), 2500);
       }
     })
     .catch(err => console.error('Live Updates Error:', err));

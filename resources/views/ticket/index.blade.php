@@ -3,47 +3,50 @@
 @section('title', 'Tiket & Job Order')
 
 @section('content')
-<div class="content-header">
+<div class="content-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:20px;">
     <div>
         <h1 class="content-title"><i class="fas fa-clipboard-list"></i> Papan Job Order</h1>
         <p class="content-subtitle">Manajemen daftar PSB, Gangguan, dan pekerjaan lapangan lainnya.</p>
     </div>
     @if(auth()->user()->role === 'admin' || auth()->user()->role === 'kasir')
-    <a href="{{ route('tickets.create') }}" class="btn btn-primary">
+    <a href="{{ route('tickets.create') }}" class="btn btn-primary" style="align-self:center; white-space:nowrap;">
         <i class="fas fa-plus"></i> Buat Tiket Baru
     </a>
     @endif
 </div>
 
 <!-- Tabs -->
-<div class="tabs-container mb-20">
+<div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.07); padding-bottom:14px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;" class="hide-scrollbar">
     @if(auth()->user()->role === 'teknisi')
-        <a href="{{ route('tickets.index', ['tab' => 'semua']) }}" class="btn {{ $tab == 'semua' ? 'btn-primary' : 'btn-outline' }}" style="color: {{ $tab == 'semua' ? '#fff' : 'var(--text-2)' }}; border-color: {{ $tab == 'semua' ? 'transparent' : 'rgba(255,255,255,0.1)' }};">
-            <i class="fas fa-list"></i> Semua Aktif
-        </a>
-        <a href="{{ route('tickets.index', ['tab' => 'tersedia']) }}" class="btn {{ $tab == 'tersedia' ? 'btn-primary' : 'btn-outline' }}" style="color: {{ $tab == 'tersedia' ? '#fff' : 'var(--text-2)' }}; border-color: {{ $tab == 'tersedia' ? 'transparent' : 'rgba(255,255,255,0.1)' }};">
-            <i class="fas fa-hand-paper"></i> Tersedia (Belum Diambil)
-        </a>
-        <a href="{{ route('tickets.index', ['tab' => 'tugas_saya']) }}" class="btn {{ $tab == 'tugas_saya' ? 'btn-primary' : 'btn-outline' }}" style="color: {{ $tab == 'tugas_saya' ? '#fff' : 'var(--text-2)' }}; border-color: {{ $tab == 'tugas_saya' ? 'transparent' : 'rgba(255,255,255,0.1)' }};">
-            <i class="fas fa-hard-hat"></i> Tugas Saya
-        </a>
-        <a href="{{ route('tickets.index', ['tab' => 'riwayat']) }}" class="btn {{ $tab == 'riwayat' ? 'btn-primary' : 'btn-outline' }}" style="color: {{ $tab == 'riwayat' ? '#fff' : 'var(--text-2)' }}; border-color: {{ $tab == 'riwayat' ? 'transparent' : 'rgba(255,255,255,0.1)' }};">
-            <i class="fas fa-check-double"></i> Riwayat Saya
-        </a>
+        @php $tabs = [
+            'semua'       => ['icon' => 'fa-list',        'label' => 'Semua Aktif'],
+            'tersedia'    => ['icon' => 'fa-hand-paper',  'label' => 'Tersedia'],
+            'tugas_saya'  => ['icon' => 'fa-hard-hat',    'label' => 'Tugas Saya'],
+            'riwayat'     => ['icon' => 'fa-check-double','label' => 'Riwayat'],
+        ]; @endphp
     @else
-        <a href="{{ route('tickets.index', ['tab' => 'semua']) }}" class="btn {{ $tab == 'semua' ? 'btn-primary' : 'btn-outline' }}" style="color: {{ $tab == 'semua' ? '#fff' : 'var(--text-2)' }}; border-color: {{ $tab == 'semua' ? 'transparent' : 'rgba(255,255,255,0.1)' }};">
-            <i class="fas fa-list"></i> Semua Job Order
-        </a>
-        <a href="{{ route('tickets.index', ['tab' => 'belum_diambil']) }}" class="btn {{ $tab == 'belum_diambil' ? 'btn-primary' : 'btn-outline' }}" style="color: {{ $tab == 'belum_diambil' ? '#fff' : '#ef4444' }}; border-color: {{ $tab == 'belum_diambil' ? 'transparent' : 'rgba(239,68,68,0.3)' }};">
-            <i class="fas fa-exclamation-circle"></i> Belum Diambil
-        </a>
-        <a href="{{ route('tickets.index', ['tab' => 'sedang_dikerjakan']) }}" class="btn {{ $tab == 'sedang_dikerjakan' ? 'btn-primary' : 'btn-outline' }}" style="color: {{ $tab == 'sedang_dikerjakan' ? '#fff' : '#3b82f6' }}; border-color: {{ $tab == 'sedang_dikerjakan' ? 'transparent' : 'rgba(59,130,246,0.3)' }};">
-            <i class="fas fa-tools"></i> Sedang Dikerjakan
-        </a>
-        <a href="{{ route('tickets.index', ['tab' => 'arsip']) }}" class="btn {{ $tab == 'arsip' ? 'btn-primary' : 'btn-outline' }}" style="color: {{ $tab == 'arsip' ? '#fff' : 'var(--text-2)' }}; border-color: {{ $tab == 'arsip' ? 'transparent' : 'rgba(255,255,255,0.1)' }};">
-            <i class="fas fa-archive"></i> Riwayat Selesai
-        </a>
+        @php $tabs = [
+            'semua'            => ['icon' => 'fa-list',            'label' => 'Semua Job Order'],
+            'belum_diambil'    => ['icon' => 'fa-exclamation-circle','label' => 'Belum Diambil',      'color' => '#ef4444'],
+            'sedang_dikerjakan'=> ['icon' => 'fa-tools',           'label' => 'Sedang Dikerjakan',   'color' => '#3b82f6'],
+            'arsip'            => ['icon' => 'fa-archive',         'label' => 'Riwayat Selesai'],
+        ]; @endphp
     @endif
+
+    @foreach($tabs as $key => $cfg)
+        @php $active = ($tab == $key); $color = $cfg['color'] ?? null; @endphp
+        <a href="{{ route('tickets.index', ['tab' => $key]) }}"
+            style="display:inline-flex; align-items:center; gap:7px; padding:7px 16px; border-radius:8px; font-size:13px; font-weight:{{ $active ? '700' : '500' }}; text-decoration:none; transition:all 0.15s;
+                {{ $active
+                    ? 'background:#3b82f6; color:#fff; box-shadow:0 2px 10px rgba(59,130,246,0.4);'
+                    : 'background:rgba(255,255,255,0.05); color:' . ($color ?? 'var(--text-2)') . '; border:1px solid rgba(255,255,255,0.1);'
+                }}"
+            onmouseover="if(!{{ $active ? 'true' : 'false' }}) this.style.background='rgba(255,255,255,0.1)'"
+            onmouseout="if(!{{ $active ? 'true' : 'false' }}) this.style.background='rgba(255,255,255,0.05)'">
+            <i class="fas {{ $cfg['icon'] }}" style="font-size:12px;"></i>
+            {{ $cfg['label'] }}
+        </a>
+    @endforeach
 </div>
 
 <!-- Filters -->
@@ -58,6 +61,7 @@
             <option value="PSB" {{ request('kategori') == 'PSB' ? 'selected' : '' }}>PSB</option>
             <option value="Gangguan" {{ request('kategori') == 'Gangguan' ? 'selected' : '' }}>Gangguan</option>
             <option value="Cabut Modem" {{ request('kategori') == 'Cabut Modem' ? 'selected' : '' }}>Cabut Modem</option>
+            <option value="Ganti Password Wifi" {{ request('kategori') == 'Ganti Password Wifi' ? 'selected' : '' }}>Ganti Password Wifi</option>
             <option value="Lainnya" {{ request('kategori') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
         </select>
         
@@ -95,11 +99,16 @@
                 </div>
             </div>
             
-            <h3 style="font-size: 16px; margin: 0 0 5px 0;">
+            <h3 style="font-size: 16px; margin: 0 0 3px 0;">
                 <a href="{{ route('tickets.show', $ticket->id) }}" style="color: var(--text-1); text-decoration: none;">
                     {{ $ticket->nomor_tiket }}
                 </a>
             </h3>
+            @if($ticket->support_ticket_id)
+            <div style="font-size: 12px; font-weight: 600; color: #fbbf24; margin-bottom: 10px; background: rgba(251,191,36,0.12); display: inline-block; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(251,191,36,0.3);">
+                <i class="fas fa-headset"></i> Aduan Pelanggan #{{ $ticket->support_ticket_id }}
+            </div>
+            @endif
             
             <p style="font-size: 14px; margin: 0 0 15px 0; color: var(--text-2);">
                 @if($ticket->pelanggan_id)
@@ -144,8 +153,34 @@
     @endforelse
 </div>
 
-<div class="mt-20">
-    {{ $tickets->links('pagination::bootstrap-5') }}
+<div class="mt-20" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+    <div style="font-size: 13px; color: var(--text-3);">
+        Menampilkan {{ $tickets->firstItem() }}–{{ $tickets->lastItem() }} dari {{ $tickets->total() }} tiket
+    </div>
+    <div style="display:flex; gap:6px; align-items:center;">
+        {{-- Prev --}}
+        @if($tickets->onFirstPage())
+            <span style="padding:6px 14px; border-radius:6px; background:rgba(255,255,255,0.04); color:var(--text-4); font-size:13px; cursor:not-allowed;">‹ Sebelumnya</span>
+        @else
+            <a href="{{ $tickets->previousPageUrl() }}" style="padding:6px 14px; border-radius:6px; background:rgba(255,255,255,0.07); color:var(--text-2); font-size:13px; text-decoration:none; border:1px solid rgba(255,255,255,0.08); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">‹ Sebelumnya</a>
+        @endif
+
+        {{-- Page numbers --}}
+        @foreach($tickets->getUrlRange(1, $tickets->lastPage()) as $page => $url)
+            @if($page == $tickets->currentPage())
+                <span style="padding:6px 12px; border-radius:6px; background:var(--primary); color:white; font-size:13px; font-weight:600; min-width:32px; text-align:center;">{{ $page }}</span>
+            @else
+                <a href="{{ $url }}" style="padding:6px 12px; border-radius:6px; background:rgba(255,255,255,0.07); color:var(--text-2); font-size:13px; text-decoration:none; border:1px solid rgba(255,255,255,0.08); min-width:32px; text-align:center; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">{{ $page }}</a>
+            @endif
+        @endforeach
+
+        {{-- Next --}}
+        @if($tickets->hasMorePages())
+            <a href="{{ $tickets->nextPageUrl() }}" style="padding:6px 14px; border-radius:6px; background:rgba(255,255,255,0.07); color:var(--text-2); font-size:13px; text-decoration:none; border:1px solid rgba(255,255,255,0.08); transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">Berikutnya ›</a>
+        @else
+            <span style="padding:6px 14px; border-radius:6px; background:rgba(255,255,255,0.04); color:var(--text-4); font-size:13px; cursor:not-allowed;">Berikutnya ›</span>
+        @endif
+    </div>
 </div>
 
 <style>
@@ -154,6 +189,8 @@
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
 }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .ticket-card {
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;

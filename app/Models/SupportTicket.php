@@ -12,4 +12,9 @@ class SupportTicket extends Model
     {
         return $this->belongsTo(Pelanggan::class);
     }
+
+    public function chats()
+    {
+        return $this->hasMany(TicketChat::class)->orderBy('created_at', 'asc');
+    }
 }

@@ -3,18 +3,63 @@
 @section('title', 'Aduan Pelanggan')
 
 @section('content')
-<div class="page-header">
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap: wrap; gap: 15px;">
     <div class="page-title">
         <h1><i class="fas fa-headset" style="color:var(--primary); margin-right:8px;"></i> Aduan Pelanggan</h1>
         <p>Kelola dan pantau tiket bantuan yang dibuat langsung oleh pelanggan.</p>
     </div>
+    <div class="tabs-container" style="background: rgba(255,255,255,0.05); padding: 6px; border-radius: 12px; display: inline-flex; gap: 4px; border: 1px solid rgba(255,255,255,0.1);">
+        <a href="{{ route('support-tickets.index') }}" 
+           style="padding: 8px 20px; border-radius: 8px; color: {{ request('filter') !== 'arsip' ? '#fff' : '#9ca3af' }}; background: {{ request('filter') !== 'arsip' ? 'var(--primary)' : 'transparent' }}; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-list"></i> Tiket Aktif
+        </a>
+        <a href="{{ route('support-tickets.index', ['filter' => 'arsip']) }}" 
+           style="padding: 8px 20px; border-radius: 8px; color: {{ request('filter') === 'arsip' ? '#fff' : '#9ca3af' }}; background: {{ request('filter') === 'arsip' ? 'var(--primary)' : 'transparent' }}; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-archive"></i> Arsip Selesai
+        </a>
+    </div>
 </div>
 
-<div class="card" x-data="{ modalTicket: null }">
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: flex-end;">
+    <form method="GET" action="{{ route('support-tickets.index') }}" style="display: flex; gap: 8px; width: 100%; max-width: 400px;">
+        @if(request('filter'))
+            <input type="hidden" name="filter" value="{{ request('filter') }}">
+        @endif
+        <input type="text" name="search" class="form-control" placeholder="Cari nama pelanggan atau #ID aduan..." value="{{ request('search') }}" style="border-radius: 8px; flex: 1; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; font-size: 14px;">
+        <button type="submit" class="btn btn-primary" style="border-radius: 8px; padding: 10px 20px;">
+            <i class="fas fa-search"></i>
+        </button>
+    </form>
+</div>
+
+<div class="card" x-data="{ modalTicket: null, selectedIds: [], selectAll: false }" x-init="$watch('selectAll', val => { selectedIds = val ? {{ json_encode($tickets->pluck('id')->toArray()) }} : [] })">
+    
+    @if(request('filter') === 'arsip')
+    <div class="bulk-actions" x-show="selectedIds.length > 0" style="padding: 12px 16px; background: rgba(239,68,68,0.1); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;" x-cloak>
+        <span style="color: #fca5a5; font-weight: 600;"><span x-text="selectedIds.length"></span> aduan terpilih</span>
+        <form action="{{ route('support-tickets.bulk-destroy') }}" method="POST" onsubmit="return confirm('Yakin hapus ' + selectedIds.length + ' aduan secara PERMANEN?');">
+            @csrf
+            @method('DELETE')
+            <template x-for="id in selectedIds">
+                <input type="hidden" name="ids[]" :value="id">
+            </template>
+            <button type="submit" class="btn btn-sm" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-weight: bold; cursor: pointer;">
+                <i class="fas fa-trash-alt"></i> Hapus Terpilih
+            </button>
+        </form>
+    </div>
+    @endif
+
     <div class="table-responsive">
         <table class="table">
             <thead>
                 <tr>
+                    @if(request('filter') === 'arsip')
+                    <th style="width: 40px; text-align: center;">
+                        <input type="checkbox" x-model="selectAll" style="transform: scale(1.2); cursor: pointer;">
+                    </th>
+                    @endif
+                    <th>ID ADUAN</th>
                     <th>TGL DIBUAT</th>
                     <th>PELANGGAN</th>
                     <th>ALAMAT</th>
@@ -26,6 +71,14 @@
             <tbody>
                 @forelse($tickets as $t)
                 <tr>
+                    @if(request('filter') === 'arsip')
+                    <td style="text-align: center;">
+                        <input type="checkbox" value="{{ $t->id }}" x-model="selectedIds" style="transform: scale(1.2); cursor: pointer;" number>
+                    </td>
+                    @endif
+                    <td>
+                        <span style="font-weight: bold; color: var(--primary);">#{{ $t->id }}</span>
+                    </td>
                     <td>
                         <div class="font-medium">{{ $t->created_at->format('d M Y') }}</div>
                         <div class="text-sm text-gray">{{ $t->created_at->format('H:i') }} WIB</div>
@@ -76,12 +129,22 @@
                             <button type="button" class="btn btn-sm btn-outline" @click="modalTicket = {{ $t->id }}" title="Lihat Detail">
                                 <i class="fas fa-eye"></i> Detail
                             </button>
+                            
+                            @if(request('filter') === 'arsip')
+                            <form action="{{ route('support-tickets.destroy', $t->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus riwayat aduan ini secara PERMANEN? Data tidak bisa dikembalikan dan akan hilang dari HP Pelanggan.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm" style="border: 1px solid #ef4444; color: #ef4444; background: transparent;" title="Hapus Permanen">
+                                    <i class="fas fa-trash-alt"></i> Hapus
+                                </button>
+                            </form>
+                            @endif
                         </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center py-4">Belum ada aduan dari pelanggan.</td>
+                    <td colspan="{{ request('filter') === 'arsip' ? '8' : '7' }}" class="text-center py-4">Belum ada aduan dari pelanggan.</td>
                 </tr>
                 @endforelse
             </tbody>

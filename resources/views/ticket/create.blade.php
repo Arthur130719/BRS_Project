@@ -23,6 +23,7 @@
                 <option value="PSB">Pasang Baru (PSB)</option>
                 <option value="Gangguan">Gangguan (GGN)</option>
                 <option value="Cabut Modem">Cabut Modem</option>
+                <option value="Ganti Password Wifi">Ganti Password Wifi</option>
                 <option value="Lainnya">Lainnya</option>
             </select>
         </div>

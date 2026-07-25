@@ -344,6 +344,15 @@ document.addEventListener('alpine:init', () => {
       localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
     }
   }));
+  
+  // Check for auto-logout message
+  const logoutMsg = localStorage.getItem('auto_logout_msg');
+  if (logoutMsg) {
+    setTimeout(() => {
+      alert(logoutMsg);
+      localStorage.removeItem('auto_logout_msg');
+    }, 500);
+  }
 });
 </script>
 </body>

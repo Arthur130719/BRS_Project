@@ -218,12 +218,10 @@
     </div>
     <div class="card-body-flush">
       @forelse($notifikasi ?? [] as $notif)
-        <div style="
-          display:flex; align-items:flex-start; gap:12px;
-          padding:12px 16px;
-          border-bottom:1px solid rgba(51,65,85,0.4);
-          transition:background var(--transition);
-        " onmouseenter="this.style.background='rgba(255,255,255,0.02)'" onmouseleave="this.style.background='transparent'">
+        @if(!empty($notif->url))
+        <a href="{{ $notif->url }}" style="text-decoration:none;">
+        @endif
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:12px; border-radius:8px; background:var(--surface-3); border:1px solid rgba(255,255,255,0.03); transition:background 0.2s; cursor:{{ !empty($notif->url) ? 'pointer' : 'default' }};" class="hover-bg-surface-4">
 
           {{-- Icon --}}
           <div style="
@@ -259,6 +257,9 @@
             {{ isset($notif->created_at) ? $notif->created_at->diffForHumans() : '-' }}
           </div>
         </div>
+        @if(!empty($notif->url))
+        </a>
+        @endif
       @empty
         <div style="padding:40px 16px; text-align:center; color:var(--text-4);">
           <i class="fas fa-bell-slash" style="font-size:28px; display:block; margin-bottom:8px; opacity:0.4;"></i>

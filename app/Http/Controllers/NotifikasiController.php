@@ -10,10 +10,15 @@ class NotifikasiController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Notifikasi::latest();
+        $query = Notifikasi::where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })->latest('updated_at');
 
         if ($request->filled('type')) {
             $query->where('type', $request->type);
+        } else {
+            $query->where('type', '!=', 'chat');
         }
 
         if ($request->filled('status')) {
@@ -21,7 +26,11 @@ class NotifikasiController extends Controller
         }
 
         $notifikasis = $query->paginate(20)->withQueryString();
-        $unreadCount = Notifikasi::where('is_read', false)->count();
+        $unreadCount = Notifikasi::where('is_read', false)
+            ->where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })->count();
 
         return view('notifikasi.index', compact('notifikasis', 'unreadCount'));
     }
@@ -36,7 +45,11 @@ class NotifikasiController extends Controller
 
     public function bacaSemua()
     {
-        Notifikasi::where('is_read', false)->update(['is_read' => true]);
+        Notifikasi::where('is_read', false)
+            ->where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })->update(['is_read' => true]);
         // Hapus cache agar badge langsung update
         Cache::forget('notif_unread_' . auth()->id());
         return back()->with('success', 'Semua notifikasi ditandai sebagai dibaca.');

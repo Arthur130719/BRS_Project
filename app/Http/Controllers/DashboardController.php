@@ -77,11 +77,21 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $notifikasi      = Notifikasi::select(['id','type','title','deskripsi','created_at'])
-            ->latest()->take(5)->get();
+        $notifikasi      = Notifikasi::select(['id','type','title','deskripsi','created_at', 'url'])
+            ->where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })
+            ->latest()
+            ->take(5)
+            ->get();
 
         $unreadCount     = Cache::remember('notif_unread_'.auth()->id(), 30, fn() =>
-            Notifikasi::where('is_read', false)->count()
+            Notifikasi::where('is_read', false)
+            ->where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })->count()
         );
 
         $autoIsolirLastRun = Cache::remember('auto_isolir_last_run', 60, fn() =>
@@ -96,16 +106,66 @@ class DashboardController extends Controller
 
     public function liveUpdates()
     {
-        $unreadCount = \App\Models\Notifikasi::where('is_read', false)->count();
-        $latestNotif = \App\Models\Notifikasi::latest()->first();
-        $latestTicket = \App\Models\Ticket::latest('updated_at')->first();
+        $user = auth()->user();
+        
+        $unreadCount = \App\Models\Notifikasi::where('is_read', false)
+            ->where('type', '!=', 'chat')
+            ->where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })->count();
+            
+        $latestNotif = \App\Models\Notifikasi::where('type', '!=', 'chat')
+            ->where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })->latest('updated_at')->first();
+
+        $chatUnreadCount = \App\Models\Notifikasi::where('is_read', false)
+            ->where('type', 'chat')
+            ->where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })->count();
+            
+        $latestChatNotif = \App\Models\Notifikasi::where('type', 'chat')
+            ->where(function($q) {
+                $q->whereNull('target_role')
+                  ->orWhere('target_role', auth()->user()->role);
+            })->latest('updated_at')->first();
+        
+        $ticketQuery = \App\Models\Ticket::query();
+        if ($user->role === 'teknisi') {
+            $ticketQuery->where('teknisi_id', $user->id);
+        }
+        
+        $latestTicket = (clone $ticketQuery)->latest('updated_at')->first();
+        $pendingTicketCount = (clone $ticketQuery)->where('status', 'Pending')->count();
+
+        $latestPermohonan = null;
+        $pendingPermohonanCount = 0;
+        
+        if (in_array($user->role, ['admin', 'kasir'])) {
+            $latestPermohonan = \App\Models\Permohonan::latest('updated_at')->first();
+            $pendingPermohonanCount = \App\Models\Permohonan::where('status', 'pending')->count();
+        }
 
         return response()->json([
             'unread_count' => $unreadCount,
             'latest_notif_id' => $latestNotif ? $latestNotif->id : 0,
+            'latest_notif_time' => $latestNotif ? $latestNotif->updated_at->timestamp : 0,
             'latest_notif_title' => $latestNotif ? $latestNotif->title : '',
             'latest_notif_type' => $latestNotif ? $latestNotif->type : 'info',
+            'latest_notif_url' => $latestNotif ? $latestNotif->url : null,
+            'chat_unread_count' => $chatUnreadCount,
+            'latest_chat_id' => $latestChatNotif ? $latestChatNotif->id : 0,
+            'latest_chat_time' => $latestChatNotif ? $latestChatNotif->updated_at->timestamp : 0,
+            'latest_chat_title' => $latestChatNotif ? $latestChatNotif->title : '',
+            'latest_chat_url' => $latestChatNotif ? $latestChatNotif->url : null,
             'latest_ticket_time' => $latestTicket ? $latestTicket->updated_at->timestamp : 0,
+            'pending_ticket_count' => $pendingTicketCount,
+            'latest_permohonan_time' => $latestPermohonan ? $latestPermohonan->updated_at->timestamp : 0,
+            'pending_permohonan_count' => $pendingPermohonanCount,
         ]);
     }
 }

@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('pelanggan', PelangganController::class);
     Route::post('/pelanggan/{id}/suspend', [PelangganController::class, 'suspend'])->name('pelanggan.suspend');
     Route::post('/pelanggan/{id}/aktifkan', [PelangganController::class, 'aktifkan'])->name('pelanggan.aktifkan');
+    Route::get('/pelanggan/{pelanggan}/live-session', [PelangganController::class, 'liveSession'])->name('pelanggan.liveSession');
 
     // ── Permohonan (Admin + Kasir)
     Route::middleware('role:admin,kasir')->group(function () {
@@ -57,14 +58,10 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Ticketing (All Roles)
     Route::resource('tickets', TicketController::class);
+    Route::post('/tickets/{id}/chats', [\App\Http\Controllers\TicketChatController::class, 'store'])->name('ticket-chats.store');
+    Route::get('/tickets/{id}/chats/html', [\App\Http\Controllers\TicketChatController::class, 'webIndexHtml'])->name('ticket-chats.html');
 
-    // ── OLT & ONU (Admin + Teknisi)
-    Route::middleware('role:admin,teknisi')->group(function () {
-        Route::get('/olt', [OltController::class, 'index'])->name('olt.index');
-        Route::resource('olt', OltController::class)->except(['index', 'show']);
-        Route::get('/olt/{olt}/onus', [OltController::class, 'onus'])->name('olt.onus');
-        Route::post('/onu/{onu}/reboot', [OltController::class, 'rebootOnu'])->name('olt.reboot');
-    });
+
 
     // ── NAS (Admin + Teknisi)
     Route::middleware('role:admin,teknisi')->group(function () {
@@ -105,6 +102,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/support-tickets', [\App\Http\Controllers\SupportTicketController::class, 'index'])->name('support-tickets.index');
         Route::post('/support-tickets/{id}/status', [\App\Http\Controllers\SupportTicketController::class, 'updateStatus'])->name('support-tickets.status');
         Route::post('/support-tickets/{id}/create-job-order', [\App\Http\Controllers\SupportTicketController::class, 'createJobOrder'])->name('support-tickets.create-job-order');
+        Route::delete('/support-tickets/bulk', [\App\Http\Controllers\SupportTicketController::class, 'bulkDestroy'])->name('support-tickets.bulk-destroy');
+        Route::delete('/support-tickets/{id}', [\App\Http\Controllers\SupportTicketController::class, 'destroy'])->name('support-tickets.destroy');
     });
 
     // Pengaturan System

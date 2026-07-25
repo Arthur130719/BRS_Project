@@ -114,13 +114,11 @@ Route::middleware('auth:sanctum')->group(function () {
             ] : null,
             'tagihan' => $tagihanData,
             'tiket_open' => $tiketOpenCount,
-            'network_health' => [
-                'ping' => rand(10, 25), // Mock data untuk Ping
-                'latency' => rand(15, 30), // Mock data untuk Latency
-                'modem_rx' => rand(-25, -15), // Mock data untuk RX
-                'modem_tx' => rand(1, 4) // Mock data untuk TX
-            ]
         ]);
+    });
+
+    Route::get('/pelanggan/live-session', function (Request $request) {
+        return app(\App\Http\Controllers\PelangganController::class)->liveSession($request->user());
     });
 
     Route::post('/pelanggan/profile/update', function (Request $request) {
@@ -230,6 +228,9 @@ Route::middleware('auth:sanctum')->group(function () {
             'ticket' => $ticket
         ]);
     });
+
+    Route::get('/pelanggan/tickets/{id}/chats', [App\Http\Controllers\TicketChatController::class, 'apiIndex']);
+    Route::post('/pelanggan/tickets/{id}/chats', [App\Http\Controllers\TicketChatController::class, 'apiStore']);
 
     Route::post('/pelanggan/location', function (Request $request) {
         $validated = $request->validate([
