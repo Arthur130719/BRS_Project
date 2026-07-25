@@ -109,6 +109,18 @@ class ActivityLogger
                     $modelId = $modelId->id ?? null;
                 }
 
+                // Tambahkan detail nama jika rute berhubungan dengan pelanggan
+                if (str_starts_with($routeName, 'pelanggan.') || str_starts_with($routeName, 'isolir.')) {
+                    if ($routeName === 'pelanggan.store') {
+                        $description .= ' ' . $request->input('nama');
+                    } elseif ($modelId) {
+                        $pelanggan = \App\Models\Pelanggan::find($modelId);
+                        if ($pelanggan) {
+                            $description .= ' ' . $pelanggan->nama;
+                        }
+                    }
+                }
+
                 ActivityLog::create([
                     'user_id'     => auth()->id(),
                     'user_name'   => auth()->user()->name,

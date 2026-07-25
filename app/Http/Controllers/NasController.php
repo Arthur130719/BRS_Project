@@ -13,6 +13,12 @@ class NasController extends Controller
         return view('nas.index', compact('nasList'));
     }
 
+    public function stats(Nas $nas, \App\Services\MikrotikService $mikrotikService)
+    {
+        $stats = $mikrotikService->getNasStats($nas);
+        return response()->json($stats);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -21,6 +27,9 @@ class NasController extends Controller
             'ip_address' => 'required|max:45',
             'model'      => 'nullable|max:100',
             'lokasi'     => 'nullable|max:200',
+            'api_user'   => 'nullable|max:255',
+            'api_password' => 'nullable|max:255',
+            'api_port'   => 'nullable|integer',
         ]);
         Nas::create($validated);
         return redirect()->route('nas.index')->with('success', 'NAS berhasil ditambahkan.');
@@ -29,14 +38,20 @@ class NasController extends Controller
     public function update(Request $request, Nas $nas)
     {
         $validated = $request->validate([
+            'kode'       => 'required|max:50|unique:nas,kode,' . $nas->id,
             'nama'       => 'required|max:100',
             'ip_address' => 'required|max:45',
             'model'      => 'nullable|max:100',
             'lokasi'     => 'nullable|max:200',
-            'status'     => 'required|in:online,offline,maintenance',
-            'cpu_pct'    => 'nullable|integer|min:0|max:100',
-            'mem_pct'    => 'nullable|integer|min:0|max:100',
+            'api_user'   => 'nullable|max:255',
+            'api_password' => 'nullable|max:255',
+            'api_port'   => 'nullable|integer',
         ]);
+
+        if (empty($validated['api_password'])) {
+            unset($validated['api_password']);
+        }
+
         $nas->update($validated);
         return redirect()->route('nas.index')->with('success', 'NAS berhasil diperbarui.');
     }

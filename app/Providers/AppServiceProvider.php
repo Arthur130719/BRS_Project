@@ -21,8 +21,8 @@ class AppServiceProvider extends ServiceProvider
         // Set Carbon locale to Indonesian
         Carbon::setLocale('id');
 
-        // Bootstrap 5 pagination
-        Paginator::useBootstrapFive();
+        // Custom minimal pagination view
+        Paginator::defaultView('vendor.pagination.custom');
 
         // Share notifikasi unread count ke semua view — cached 30 detik
         // Ini mencegah 2 query DB terpisah di layout pada setiap page load

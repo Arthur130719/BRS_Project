@@ -21,15 +21,16 @@
             </button>
 
             {{-- ── MODAL TAMBAH PELANGGAN ── --}}
-            <div x-show="open"
-                 x-transition:enter="transition ease-out duration-150"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="transition ease-in duration-100"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="modal-overlay"
-                 @click.self="open = false"
+            <template x-teleport="body">
+                <div x-show="open"
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-100"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="modal-overlay"
+                     @click.self="open = false"
                  style="display:none;">
                 <div class="modal modal-lg" @click.stop>
                     <div class="modal-header">
@@ -63,7 +64,7 @@
                                            name="password_pppoe"
                                            class="form-control form-control-mono"
                                            value="{{ old('password_pppoe') }}"
-                                           placeholder="Min. 6 karakter"
+                                           placeholder="Min. 3 karakter"
                                            autocomplete="new-password">
                                     @if($errors->has('password_pppoe'))
                                         <div class="form-error">{{ $errors->first('password_pppoe') }}</div>
@@ -93,9 +94,18 @@
                                            name="phone"
                                            class="form-control form-control-mono"
                                            value="{{ old('phone') }}"
-                                           placeholder="08xxxxxxxxxx">
+                                           placeholder="Utama (08x...)">
                                     @if($errors->has('phone'))
                                         <div class="form-error">{{ $errors->first('phone') }}</div>
+                                    @endif
+                                    <input type="text"
+                                           name="phone_2"
+                                           class="form-control form-control-mono"
+                                           style="margin-top: 6px;"
+                                           value="{{ old('phone_2') }}"
+                                           placeholder="Alt. (08x...)">
+                                    @if($errors->has('phone_2'))
+                                        <div class="form-error">{{ $errors->first('phone_2') }}</div>
                                     @endif
                                 </div>
                                 <div class="form-group" style="margin-bottom:0;">
@@ -170,7 +180,7 @@
                         </div>
                     </form>
                 </div>
-            </div>
+            </template>
         </div>
         @endif
     </div>
@@ -307,6 +317,9 @@
                                 <div style="font-size:13px;color:var(--text-1);">{{ $p->paket->nama }}</div>
                                 <div class="mono-mute" style="font-size:11px;">
                                     {{ $p->paket->kecepatan_down }}↓ / {{ $p->paket->kecepatan_up }}↑ Mbps
+                                    @if($p->paket->mikrotik_profile)
+                                    &bull; <span style="color:var(--indigo);">{{ $p->paket->mikrotik_profile }}</span>
+                                    @endif
                                 </div>
                             @else
                                 <span class="text-mute">—</span>
@@ -337,15 +350,18 @@
                         {{-- Jatuh Tempo --}}
                         <td>
                             @if($p->expiry)
-                                @php $isExpired = $p->expiry->isPast(); @endphp
-                                <span class="mono {{ $isExpired ? '' : '' }}"
-                                      style="color: {{ $isExpired ? 'var(--red)' : ($p->expiry->diffInDays(now()) <= 7 ? 'var(--amber)' : 'var(--text-2)') }}">
+                                @php 
+                                    $isExpired = $p->expiry->isPast(); 
+                                    $sisaHari = (int) now()->startOfDay()->diffInDays($p->expiry->startOfDay(), false);
+                                @endphp
+                                <span class="mono"
+                                      style="color: {{ $isExpired ? 'var(--red)' : ($sisaHari <= 7 && $sisaHari >= 0 ? 'var(--amber)' : 'var(--text-2)') }}">
                                     {{ $p->expiry->format('d M Y') }}
                                 </span>
                                 @if($isExpired)
                                     <div style="font-size:10px;color:var(--red);margin-top:2px;">Sudah lewat</div>
-                                @elseif($p->expiry->diffInDays(now()) <= 7)
-                                    <div style="font-size:10px;color:var(--amber);margin-top:2px;">{{ $p->expiry->diffInDays(now()) }} hari lagi</div>
+                                @elseif($sisaHari <= 7 && $sisaHari >= 0)
+                                    <div style="font-size:10px;color:var(--amber);margin-top:2px;">{{ $sisaHari }} hari lagi</div>
                                 @endif
                             @else
                                 <span class="mono-mute">—</span>

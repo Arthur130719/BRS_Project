@@ -10,8 +10,17 @@ use App\Models\Paket;
 use App\Models\Pelanggan;
 use Illuminate\Http\Request;
 
+use App\Services\MikrotikService;
+
 class PelangganController extends Controller
 {
+    protected $mikrotikService;
+
+    public function __construct(MikrotikService $mikrotikService)
+    {
+        $this->mikrotikService = $mikrotikService;
+    }
+
     public function index(Request $request)
     {
         $query = Pelanggan::with(['paket', 'nas', 'olt']);
@@ -61,9 +70,10 @@ class PelangganController extends Controller
 
         $validated = $request->validate([
             'username_pppoe' => 'required|unique:pelanggans,username_pppoe|max:100',
-            'password_pppoe' => 'required|min:6',
+            'password_pppoe' => 'required|min:3',
             'nama'           => 'required|max:200',
             'phone'          => 'nullable|max:20',
+            'phone_2'        => 'nullable|max:20',
             'alamat'         => 'nullable|max:500',
             'latitude'       => 'nullable|numeric|between:-90,90',
             'longitude'      => 'nullable|numeric|between:-180,180',
@@ -71,11 +81,25 @@ class PelangganController extends Controller
             'nas_id'         => 'nullable|exists:nas,id',
             'olt_id'         => 'nullable|exists:olts,id',
             'ip_pool'        => 'nullable|max:50',
-            'tgl_aktif'      => 'nullable|date',
-            'expiry'         => 'nullable|date',
         ]);
 
+        $validated['tgl_aktif'] = now()->format('Y-m-d');
+        $validated['expiry'] = now()->addMonth()->format('Y-m-d');
+
         $pelanggan = Pelanggan::create($validated);
+        
+        // Buat tagihan pertama secara otomatis (PSB)
+        if ($pelanggan->paket) {
+            \App\Models\Invoice::create([
+                'pelanggan_id'    => $pelanggan->id,
+                'no_invoice'      => \App\Models\Invoice::generateNoInvoice(),
+                'periode'         => \Carbon\Carbon::now()->translatedFormat('F Y'),
+                'nominal'         => $pelanggan->paket->harga,
+                'tgl_jatuh_tempo' => now()->addDays(7)->format('Y-m-d'),
+                'keterangan'      => 'Tagihan Pemasangan Baru (Bulan Pertama)',
+                'status'          => 'unpaid',
+            ]);
+        }
 
         Notifikasi::create([
             'type'      => 'info',
@@ -113,9 +137,10 @@ class PelangganController extends Controller
 
         $validated = $request->validate([
             'username_pppoe' => 'required|unique:pelanggans,username_pppoe,' . $pelanggan->id . '|max:100',
-            'password_pppoe' => 'nullable|min:6',
+            'password_pppoe' => 'nullable|min:3',
             'nama'           => 'required|max:200',
             'phone'          => 'nullable|max:20',
+            'phone_2'        => 'nullable|max:20',
             'alamat'         => 'nullable|max:500',
             'latitude'       => 'nullable|numeric|between:-90,90',
             'longitude'      => 'nullable|numeric|between:-180,180',
@@ -129,6 +154,9 @@ class PelangganController extends Controller
 
         if (empty($validated['password_pppoe'])) {
             unset($validated['password_pppoe']);
+        } else {
+            // Revoke all existing tokens if password is changed
+            $pelanggan->tokens()->delete();
         }
 
         $pelanggan->update($validated);
@@ -154,6 +182,10 @@ class PelangganController extends Controller
             'isolir_by' => 'manual:' . auth()->id(),
             'isolir_at' => now(),
         ]);
+
+        if ($pelanggan->nas) {
+            $this->mikrotikService->changePppoeProfile($pelanggan->nas, $pelanggan->username_pppoe, 'isolir');
+        }
 
         $hasUnpaid = \App\Models\Invoice::where('pelanggan_id', $pelanggan->id)
             ->where('status', 'unpaid')
@@ -191,6 +223,11 @@ class PelangganController extends Controller
             'isolir_by' => null,
             'isolir_at' => null,
         ]);
+
+        if ($pelanggan->nas && $pelanggan->paket) {
+            $profileName = $pelanggan->paket->mikrotik_profile ?: $pelanggan->paket->nama;
+            $this->mikrotikService->changePppoeProfile($pelanggan->nas, $pelanggan->username_pppoe, $profileName);
+        }
 
         IsolirLog::create([
             'pelanggan_id' => $pelanggan->id,

@@ -65,12 +65,10 @@ class DashboardController extends Controller
             ];
         }
 
-        // ── Distribusi paket: cache 5 menit ─────────────────────────────────────
-        $paketDistribusi = Cache::remember('paket_distribusi', 300, fn() =>
-            Paket::withCount(['pelanggans' => fn($q) => $q->where('status', 'active')])
-                ->get()
-                ->map(fn($p) => ['label' => $p->nama, 'count' => $p->pelanggans_count])
-        );
+        // ── Distribusi paket ─────────────────────────────────────
+        $paketDistribusi = Paket::withCount(['pelanggans' => fn($q) => $q->where('status', 'active')])
+            ->get()
+            ->map(fn($p) => ['label' => $p->nama, 'count' => $p->pelanggans_count]);
 
         // ── Recent data: limit ketat + only needed columns ───────────────────────
         $recentInvoices = Invoice::select(['id','no_invoice','pelanggan_id','periode','nominal','status','tgl_bayar'])
@@ -94,5 +92,20 @@ class DashboardController extends Controller
             'stats', 'revenue', 'paketDistribusi',
             'recentInvoices', 'notifikasi', 'unreadCount', 'autoIsolirLastRun'
         ));
+    }
+
+    public function liveUpdates()
+    {
+        $unreadCount = \App\Models\Notifikasi::where('is_read', false)->count();
+        $latestNotif = \App\Models\Notifikasi::latest()->first();
+        $latestTicket = \App\Models\Ticket::latest('updated_at')->first();
+
+        return response()->json([
+            'unread_count' => $unreadCount,
+            'latest_notif_id' => $latestNotif ? $latestNotif->id : 0,
+            'latest_notif_title' => $latestNotif ? $latestNotif->title : '',
+            'latest_notif_type' => $latestNotif ? $latestNotif->type : 'info',
+            'latest_ticket_time' => $latestTicket ? $latestTicket->updated_at->timestamp : 0,
+        ]);
     }
 }

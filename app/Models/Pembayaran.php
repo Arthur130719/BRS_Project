@@ -31,13 +31,16 @@ class Pembayaran extends Model
 
     public function getMetodeLabelAttribute(): string
     {
+        if ($this->metode === 'Transfer Lain' || $this->metode === 'transfer_lain') {
+            return 'Transfer ' . ($this->nama_bank ?? 'Lainnya');
+        }
+        
         return match($this->metode) {
             'cash'             => 'Cash',
             'transfer_bca'     => 'Transfer BCA',
             'transfer_bri'     => 'Transfer BRI',
             'transfer_mandiri' => 'Transfer Mandiri',
             'transfer_bni'     => 'Transfer BNI',
-            'transfer_lain'    => 'Transfer ' . ($this->nama_bank ?? ''),
             default            => $this->metode,
         };
     }

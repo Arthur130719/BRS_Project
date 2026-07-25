@@ -11,7 +11,7 @@
   </div>
   <div class="page-header-actions" x-data="{ open: false }">
     <button @click="open=true" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Pengguna</button>
-
+    <template x-teleport="body">
     <div x-show="open" class="modal-overlay" @click.self="open=false" x-cloak>
       <div class="modal">
         <div class="modal-header">
@@ -66,7 +66,7 @@
           </div>
         </form>
       </div>
-    </div>
+    </template>
   </div>
 </div>
 
@@ -124,6 +124,7 @@
               </div>
 
               {{-- Edit Modal --}}
+              <template x-teleport="body">
               <div x-show="editOpen" class="modal-overlay" @click.self="editOpen=false" x-cloak>
                 <div class="modal">
                   <div class="modal-header">
@@ -175,7 +176,7 @@
                     </div>
                   </form>
                 </div>
-              </div>
+              </template>
             </tr>
           @empty
             <tr><td colspan="7"><div class="empty-state"><i class="fas fa-users-slash"></i><h3>Belum ada pengguna</h3></div></td></tr>

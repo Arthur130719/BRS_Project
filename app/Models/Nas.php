@@ -14,6 +14,7 @@ class Nas extends Model
     protected $fillable = [
         'kode', 'nama', 'ip_address', 'model', 'lokasi',
         'status', 'uptime', 'cpu_pct', 'mem_pct',
+        'api_user', 'api_password', 'api_port',
     ];
 
     public function pelanggans()

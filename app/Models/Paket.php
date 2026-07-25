@@ -10,7 +10,7 @@ class Paket extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nama', 'kecepatan_down', 'kecepatan_up', 'harga', 'deskripsi', 'is_active',
+        'nama', 'mikrotik_profile', 'kecepatan_down', 'kecepatan_up', 'harga', 'deskripsi', 'is_active',
     ];
 
     protected $casts = [

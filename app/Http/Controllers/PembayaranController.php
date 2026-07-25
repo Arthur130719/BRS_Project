@@ -29,12 +29,12 @@ class PembayaranController extends Controller
         return view('pembayaran.create', compact('invoices', 'selectedInvoice'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\MikrotikService $mikrotikService)
     {
         $validated = $request->validate([
             'invoice_id'  => 'required|exists:invoices,id',
             'nominal'     => 'required|numeric|min:1000',
-            'metode'      => 'required|in:cash,transfer_bca,transfer_bri,transfer_mandiri,transfer_bni,transfer_lain',
+            'metode'      => 'required|string|max:100',
             'nama_bank'   => 'nullable|max:100',
             'tgl_bayar'   => 'required|date',
             'keterangan'  => 'nullable|max:255',
@@ -69,6 +69,11 @@ class PembayaranController extends Controller
                     'user_id'      => auth()->id(),
                     'alasan'       => 'Diaktifkan setelah pembayaran lunas via ' . $pembayaran->metode_label,
                 ]);
+                
+                if ($pelanggan->nas) {
+                    $profileName = $pelanggan->paket->mikrotik_profile ?: $pelanggan->paket->nama;
+                    $mikrotikService->changePppoeProfile($pelanggan->nas, $pelanggan->username_pppoe, $profileName);
+                }
             }
         } else {
             $invoice->update(['status' => 'partial']);

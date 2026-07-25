@@ -87,7 +87,7 @@
 </div><!-- /.stats-grid -->
 
 {{-- ── Row 2: Charts ── --}}
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+<div class="grid-2" style="margin-bottom:16px;">
 
   {{-- Revenue Bar Chart --}}
   <div class="card">
@@ -126,7 +126,7 @@
 </div><!-- /.grid charts -->
 
 {{-- ── Row 3: Recent Invoices + Notifikasi ── --}}
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+<div class="grid-2" style="margin-bottom:16px;">
 
   {{-- Recent Invoices --}}
   <div class="card">

@@ -102,28 +102,7 @@
           <textarea name="alamat" class="form-control" rows="3"
                     placeholder="Jl. Contoh No.1, Kel. ..., Kec. ...">{{ old('alamat') }}</textarea>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Latitude</label>
-            <input type="text" name="latitude" class="form-control" value="{{ old('latitude') }}" placeholder="-6.12345678">
-            @error('latitude')<div class="form-error">{{ $message }}</div>@enderror
-          </div>
-          <div class="form-group">
-            <label class="form-label">Longitude</label>
-            <input type="text" name="longitude" class="form-control" value="{{ old('longitude') }}" placeholder="106.12345678">
-            @error('longitude')<div class="form-error">{{ $message }}</div>@enderror
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Tanggal Aktif</label>
-            <input type="date" name="tgl_aktif" class="form-control" value="{{ old('tgl_aktif', now()->format('Y-m-d')) }}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Tanggal Expired</label>
-            <input type="date" name="expiry" class="form-control" value="{{ old('expiry', now()->addMonth()->format('Y-m-d')) }}">
-          </div>
-        </div>
+
 
         <div style="margin-top: 8px; padding: 12px; background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; font-size: 12px; color: var(--text-3);">
           <i class="fas fa-circle-info" style="color:var(--indigo);margin-right:6px;"></i>

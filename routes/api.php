@@ -6,6 +6,7 @@ use App\Models\Pelanggan;
 use App\Models\Paket;
 use App\Models\Invoice;
 use App\Models\Ticket;
+use App\Models\Notifikasi;
 use Carbon\Carbon;
 
 /*
@@ -50,7 +51,12 @@ Route::post('/pelanggan/login', function (Request $request) {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/pelanggan/ping', function (Request $request) {
+        return response()->json(['status' => 'ok']);
+    });
+
     Route::get('/pelanggan/dashboard', function (Request $request) {
+        /** @var \App\Models\Pelanggan $pelanggan */
         $pelanggan = $request->user();
         $pelanggan->load('paket');
         
@@ -93,14 +99,17 @@ Route::middleware('auth:sanctum')->group(function () {
                 'username_pppoe' => $pelanggan->username_pppoe,
                 'status' => $pelanggan->status,
                 'phone' => $pelanggan->phone,
+                'phone_2' => $pelanggan->phone_2,
                 'alamat' => $pelanggan->alamat,
                 'latitude' => $pelanggan->latitude,
                 'longitude' => $pelanggan->longitude,
                 'ip_address' => $pelanggan->ip_address,
+                'avatar' => $pelanggan->avatar ? asset('storage/' . $pelanggan->avatar) : null,
+                'banner' => $pelanggan->banner ? asset('storage/' . $pelanggan->banner) : null,
             ],
             'paket' => $pelanggan->paket ? [
-                'nama_paket' => $pelanggan->paket->nama_paket,
-                'kecepatan' => $pelanggan->paket->kecepatan,
+                'nama_paket' => $pelanggan->paket->nama,
+                'kecepatan' => $pelanggan->paket->kecepatan_down,
                 'harga' => $pelanggan->paket->harga,
             ] : null,
             'tagihan' => $tagihanData,
@@ -114,7 +123,53 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
     });
 
+    Route::post('/pelanggan/profile/update', function (Request $request) {
+        $pelanggan = $request->user();
+        
+        $validated = $request->validate([
+            'phone' => 'nullable|string|max:50',
+            'phone_2' => 'nullable|string|max:50',
+            'avatar' => 'nullable|image|max:2048',
+            'banner' => 'nullable|image|max:4096',
+        ]);
+
+        if ($request->has('phone')) {
+            $pelanggan->phone = $validated['phone'];
+        }
+        if ($request->has('phone_2')) {
+            $pelanggan->phone_2 = $validated['phone_2'];
+        }
+
+        if ($request->hasFile('avatar')) {
+            if ($pelanggan->avatar) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($pelanggan->avatar);
+            }
+            $pelanggan->avatar = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        if ($request->hasFile('banner')) {
+            if ($pelanggan->banner) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($pelanggan->banner);
+            }
+            $pelanggan->banner = $request->file('banner')->store('banners', 'public');
+        }
+
+        $pelanggan->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui.',
+            'pelanggan' => [
+                'phone' => $pelanggan->phone,
+                'phone_2' => $pelanggan->phone_2,
+                'avatar' => $pelanggan->avatar ? asset('storage/' . $pelanggan->avatar) : null,
+                'banner' => $pelanggan->banner ? asset('storage/' . $pelanggan->banner) : null,
+            ]
+        ]);
+    });
+
     Route::get('/pelanggan/invoices', function (Request $request) {
+        /** @var \App\Models\Pelanggan $pelanggan */
         $pelanggan = $request->user();
         $invoices = Invoice::where('pelanggan_id', $pelanggan->id)
             ->orderBy('created_at', 'desc')
@@ -123,6 +178,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/pelanggan/invoices/{id}/download', function (Request $request, $id) {
+        /** @var \App\Models\Pelanggan $pelanggan */
         $pelanggan = $request->user();
         $invoice = Invoice::with(['pelanggan.paket'])->where('pelanggan_id', $pelanggan->id)->findOrFail($id);
         
@@ -133,6 +189,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/pelanggan/tickets', function (Request $request) {
+        /** @var \App\Models\Pelanggan $pelanggan */
         $pelanggan = $request->user();
         $tickets = \App\Models\SupportTicket::where('pelanggan_id', $pelanggan->id)
             ->orderBy('created_at', 'desc')
@@ -149,6 +206,7 @@ Route::middleware('auth:sanctum')->group(function () {
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
         
+        /** @var \App\Models\Pelanggan $pelanggan */
         $pelanggan = $request->user();
         
         $ticket = \App\Models\SupportTicket::create([
@@ -159,6 +217,12 @@ Route::middleware('auth:sanctum')->group(function () {
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
             'status' => 'open',
+        ]);
+
+        Notifikasi::create([
+            'type'      => 'warning',
+            'title'     => 'Aduan Baru: ' . $pelanggan->nama,
+            'deskripsi' => 'Judul: ' . $ticket->subject,
         ]);
 
         return response()->json([
@@ -173,6 +237,7 @@ Route::middleware('auth:sanctum')->group(function () {
             'longitude' => 'required|numeric|between:-180,180',
         ]);
 
+        /** @var \App\Models\Pelanggan $pelanggan */
         $pelanggan = $request->user();
         $pelanggan->update([
             'latitude' => $validated['latitude'],
@@ -196,14 +261,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/pelanggan/settings', function (Request $request) {
         $settings = \DB::table('system_settings')
-            ->whereIn('key', ['bank_bca', 'bank_mandiri', 'bank_bri', 'bank_bni'])
-            ->get()->pluck('value', 'key');
+            ->where('key', 'rekening_banks')
+            ->first();
             
+        $rekening_banks = [];
+        if ($settings && $settings->value) {
+            $rekening_banks = json_decode($settings->value, true) ?: [];
+        }
+
         return response()->json([
-            'bank_bca' => $settings->get('bank_bca'),
-            'bank_mandiri' => $settings->get('bank_mandiri'),
-            'bank_bri' => $settings->get('bank_bri'),
-            'bank_bni' => $settings->get('bank_bni'),
+            'rekening_banks' => $rekening_banks
         ]);
     });
 });

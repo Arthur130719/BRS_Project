@@ -279,74 +279,41 @@
                 <span>Nomor rekening ini ditampilkan kepada kasir saat konfirmasi pembayaran dari pelanggan.</span>
             </div>
 
-            <form method="POST" action="{{ route('pengaturan.update') }}">
+            <form method="POST" action="{{ route('pengaturan.update') }}" id="formRekening">
                 @csrf
 
-                {{-- BCA --}}
-                <div class="form-group">
-                    <label class="bank-label">Bank BCA</label>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div class="bank-field-icon" style="background:rgba(0,86,179,0.15); color:#60a5fa;">
-                            <i class="fas fa-landmark"></i>
-                        </div>
-                        <input type="text" name="bank_bca" class="form-control form-control-mono"
-                               placeholder="1234567890"
-                               value="{{ old('bank_bca', $settings['bank_bca'] ?? '') }}">
-                    </div>
-                    @if($errors->first('bank_bca'))
-                        <div class="form-error">{{ $errors->first('bank_bca') }}</div>
-                    @endif
+                @php
+                    $rekeningBanks = [];
+                    if (isset($settings['rekening_banks'])) {
+                        $rekeningBanks = json_decode($settings['rekening_banks'], true) ?: [];
+                    } else {
+                        if(!empty($settings['bank_bca'])) {
+                            $p = explode(' a.n ', $settings['bank_bca']);
+                            $rekeningBanks[] = ['bank'=>'BCA', 'norek'=> trim($p[0]), 'an'=> trim($p[1] ?? '')];
+                        }
+                        if(!empty($settings['bank_bri'])) {
+                            $p = explode(' a.n ', $settings['bank_bri']);
+                            $rekeningBanks[] = ['bank'=>'BRI', 'norek'=> trim($p[0]), 'an'=> trim($p[1] ?? '')];
+                        }
+                        if(!empty($settings['bank_mandiri'])) {
+                            $p = explode(' a.n ', $settings['bank_mandiri']);
+                            $rekeningBanks[] = ['bank'=>'Mandiri', 'norek'=> trim($p[0]), 'an'=> trim($p[1] ?? '')];
+                        }
+                        if(!empty($settings['bank_bni'])) {
+                            $p = explode(' a.n ', $settings['bank_bni']);
+                            $rekeningBanks[] = ['bank'=>'BNI', 'norek'=> trim($p[0]), 'an'=> trim($p[1] ?? '')];
+                        }
+                    }
+                @endphp
+
+                <div id="rekening-list" style="display:flex; flex-direction:column; gap:16px;">
+                    <!-- Di-render oleh JS -->
                 </div>
 
-                {{-- BRI --}}
-                <div class="form-group">
-                    <label class="bank-label">Bank BRI</label>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div class="bank-field-icon" style="background:rgba(0,100,0,0.15); color:#4ade80;">
-                            <i class="fas fa-landmark"></i>
-                        </div>
-                        <input type="text" name="bank_bri" class="form-control form-control-mono"
-                               placeholder="1234567890"
-                               value="{{ old('bank_bri', $settings['bank_bri'] ?? '') }}">
-                    </div>
-                    @if($errors->first('bank_bri'))
-                        <div class="form-error">{{ $errors->first('bank_bri') }}</div>
-                    @endif
-                </div>
-
-                {{-- Mandiri --}}
-                <div class="form-group">
-                    <label class="bank-label">Bank Mandiri</label>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div class="bank-field-icon" style="background:rgba(245,158,11,0.15); color:#fcd34d;">
-                            <i class="fas fa-landmark"></i>
-                        </div>
-                        <input type="text" name="bank_mandiri" class="form-control form-control-mono"
-                               placeholder="1234567890"
-                               value="{{ old('bank_mandiri', $settings['bank_mandiri'] ?? '') }}">
-                    </div>
-                    @if($errors->first('bank_mandiri'))
-                        <div class="form-error">{{ $errors->first('bank_mandiri') }}</div>
-                    @endif
-                </div>
-
-                {{-- BNI --}}
-                <div class="form-group">
-                    <label class="bank-label">Bank BNI</label>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div class="bank-field-icon" style="background:rgba(239,68,68,0.12); color:#fca5a5;">
-                            <i class="fas fa-landmark"></i>
-                        </div>
-                        <input type="text" name="bank_bni" class="form-control form-control-mono"
-                               placeholder="1234567890"
-                               value="{{ old('bank_bni', $settings['bank_bni'] ?? '') }}">
-                    </div>
-                    @if($errors->first('bank_bni'))
-                        <div class="form-error">{{ $errors->first('bank_bni') }}</div>
-                    @endif
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                <div style="margin-top:16px; border-top:1px dashed var(--border); padding-top:16px; display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" class="btn btn-outline" style="font-size:12px; padding:6px 12px;" onclick="addRekening()">
+                        <i class="fas fa-plus"></i> Tambah Rekening
+                    </button>
                     <button type="submit" name="section" value="bank" class="btn btn-success">
                         <i class="fas fa-save"></i> Simpan Rekening
                     </button>
@@ -355,6 +322,60 @@
         </div>
     </div>
 </div>
+
+<script>
+    let rekeningData = @json($rekeningBanks);
+    const rekeningList = document.getElementById('rekening-list');
+
+    function renderRekening() {
+        rekeningList.innerHTML = '';
+        if(rekeningData.length === 0) {
+            rekeningList.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-4); font-size:12px;">Belum ada rekening. Klik Tambah Rekening.</div>';
+            return;
+        }
+
+        rekeningData.forEach((rek, index) => {
+            const div = document.createElement('div');
+            div.style.cssText = 'background:var(--bg-base); padding:12px; border:1px solid var(--border); border-radius:var(--radius); position:relative;';
+            div.innerHTML = `
+                <div style="position:absolute; top:8px; right:8px;">
+                    <button type="button" onclick="removeRekening(${index})" style="background:var(--red-d); border:1px solid rgba(239,68,68,0.2); color:#fca5a5; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;"><i class="fas fa-trash"></i></button>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1.5fr; gap:12px; margin-bottom:8px; padding-right:32px;">
+                    <div>
+                        <label style="font-size:10px; font-weight:600; text-transform:uppercase; color:var(--text-3); margin-bottom:4px; display:block;">Nama Bank/E-Wallet</label>
+                        <input type="text" name="rekening[${index}][bank]" class="form-control" value="${rek.bank || ''}" placeholder="Cth: BCA / DANA" required>
+                    </div>
+                    <div>
+                        <label style="font-size:10px; font-weight:600; text-transform:uppercase; color:var(--text-3); margin-bottom:4px; display:block;">Nomor Rekening</label>
+                        <input type="text" name="rekening[${index}][norek]" class="form-control form-control-mono" value="${rek.norek || ''}" placeholder="123456789" required>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:10px; font-weight:600; text-transform:uppercase; color:var(--text-3); margin-bottom:4px; display:block;">Atas Nama</label>
+                    <input type="text" name="rekening[${index}][an]" class="form-control" value="${rek.an || ''}" placeholder="Nama Pemilik" required>
+                </div>
+            `;
+            rekeningList.appendChild(div);
+        });
+    }
+
+    function addRekening() {
+        rekeningData.push({ bank: '', norek: '', an: '' });
+        renderRekening();
+    }
+
+    function removeRekening(index) {
+        if(confirm('Hapus rekening ini?')) {
+            rekeningData.splice(index, 1);
+            renderRekening();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderRekening();
+    });
+</script>
 
 {{-- Recent Auto-Isolir Log Table --}}
 <div class="card">

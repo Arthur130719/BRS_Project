@@ -155,26 +155,32 @@
     </div>
 </div>
 
+@if ($errors->any())
+    <div style="margin-bottom:24px; padding:16px; background:var(--red-dim); color:var(--red); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-lg);">
+        <h4 style="margin:0 0 8px 0; font-size:14px; display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-exclamation-triangle"></i> Gagal Menyimpan Data
+        </h4>
+        <ul style="margin:0; padding-left:24px; font-size:13px;">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 {{-- NAS Cards Grid --}}
 @if(isset($nasList) && $nasList->count() > 0)
 <div class="nas-grid">
     @foreach($nasList as $nas)
     @php
-        $cpu = $nas->cpu_percent ?? 0;
-        $mem = $nas->memory_percent ?? 0;
-        $cpuClass = $cpu >= 85 ? 'cpu-high' : ($cpu >= 60 ? 'cpu-mid' : 'cpu-low');
-        $memClass = $mem >= 85 ? 'mem-high' : ($mem >= 60 ? 'mem-mid' : 'mem-low');
-        $cpuColor = $cpu >= 85 ? 'var(--red)' : ($cpu >= 60 ? 'var(--amber)' : 'var(--green)');
-        $memColor = $mem >= 85 ? 'var(--red)' : ($mem >= 60 ? 'var(--amber)' : 'var(--sky)');
+        // Keep initial values for fast paint
+        $cpu = $nas->cpu_pct ?? 0;
+        $mem = $nas->mem_pct ?? 0;
     @endphp
-    <div class="nas-card">
+    <div class="nas-card" x-data="nasCard({{ $nas->id }}, {{ $cpu }}, {{ $mem }}, '{{ $nas->uptime ?? 'N/A' }}', {{ $nas->pelanggans_count ?? $nas->pelanggan_count ?? 0 }}, '{{ $nas->status ?? 'offline' }}')" x-init="startPolling()">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
             <div class="nas-kode">{{ $nas->kode }}</div>
-            @if(($nas->status ?? 'online') === 'online')
-                <span class="badge badge-online">Online</span>
-            @else
-                <span class="badge badge-offline">Offline</span>
-            @endif
+            <span class="badge" :class="status === 'online' ? 'badge-online' : 'badge-offline'" x-text="status === 'online' ? 'Online' : 'Offline'"></span>
         </div>
         <div class="nas-name">{{ $nas->nama }}</div>
         <div class="nas-ip">{{ $nas->ip_address }}</div>
@@ -187,27 +193,31 @@
         {{-- CPU --}}
         <div class="progress-label">
             <span>CPU</span>
-            <span style="color:{{ $cpuColor }};">{{ $cpu }}%</span>
+            <span :style="'color:' + getCpuColor()">
+                <span x-text="cpu + '%'"></span>
+            </span>
         </div>
         <div class="progress-bar-wrap">
-            <div class="progress-bar-fill {{ $cpuClass }}" style="width:{{ min(100, $cpu) }}%;"></div>
+            <div class="progress-bar-fill" :class="getCpuClass()" :style="'width:' + Math.min(100, cpu) + '%'"></div>
         </div>
 
         {{-- Memory --}}
         <div class="progress-label">
             <span>Memory</span>
-            <span style="color:{{ $memColor }};">{{ $mem }}%</span>
+            <span :style="'color:' + getMemColor()">
+                <span x-text="mem + '%'"></span>
+            </span>
         </div>
         <div class="progress-bar-wrap">
-            <div class="progress-bar-fill {{ $memClass }}" style="width:{{ min(100, $mem) }}%;"></div>
+            <div class="progress-bar-fill" :class="getMemClass()" :style="'width:' + Math.min(100, mem) + '%'"></div>
         </div>
 
         <div class="nas-footer">
             <div class="nas-pelanggan">
-                <strong>{{ $nas->pelanggans_count ?? $nas->pelanggan_count ?? 0 }}</strong> Pelanggan
+                <strong x-text="activeUsers"></strong> Pelanggan Aktif
             </div>
-            <div style="font-size:10px; color:var(--text-4); font-family:'JetBrains Mono', monospace;">
-                ↑ {{ $nas->uptime ?? 'N/A' }}
+            <div style="font-size:10px; color:var(--text-4); font-family:'JetBrains Mono', monospace;" title="Uptime">
+                ↑ <span x-text="uptime"></span>
             </div>
         </div>
     </div>
@@ -257,12 +267,26 @@
                 <tbody>
                     @forelse($nasList ?? [] as $nas)
                     @php
-                        $cpu = $nas->cpu_percent ?? 0;
-                        $mem = $nas->memory_percent ?? 0;
-                        $cpuColor = $cpu >= 85 ? 'var(--red)' : ($cpu >= 60 ? 'var(--amber)' : 'var(--green)');
-                        $memColor = $mem >= 85 ? 'var(--red)' : ($mem >= 60 ? 'var(--amber)' : 'var(--sky)');
+                        // Initial values for fast paint
+                        $cpu = $nas->cpu_pct ?? 0;
+                        $mem = $nas->mem_pct ?? 0;
                     @endphp
-                    <tr>
+                    <tr x-data="{ 
+                            cpu: {{ $cpu }}, 
+                            mem: {{ $mem }}, 
+                            uptime: '{{ $nas->uptime ?? 'N/A' }}', 
+                            activeUsers: {{ $nas->pelanggans_count ?? $nas->pelanggan_count ?? 0 }}, 
+                            status: '{{ $nas->status ?? 'offline' }}',
+                            getCpuColor() { return this.cpu >= 85 ? 'var(--red)' : (this.cpu >= 60 ? 'var(--amber)' : 'var(--green)'); },
+                            getMemColor() { return this.mem >= 85 ? 'var(--red)' : (this.mem >= 60 ? 'var(--amber)' : 'var(--sky)'); }
+                        }" 
+                        @nas-updated.window="if ($event.detail.id == {{ $nas->id }}) { 
+                            cpu = $event.detail.cpu; 
+                            mem = $event.detail.mem; 
+                            uptime = $event.detail.uptime; 
+                            activeUsers = $event.detail.active_users; 
+                            status = $event.detail.status; 
+                        }">
                         <td><span class="mono">{{ $nas->kode }}</span></td>
                         <td>
                             <div style="font-weight:500; color:var(--text-1);">{{ $nas->nama }}</div>
@@ -272,33 +296,29 @@
                             <span style="font-size:12px; color:var(--text-2);">{{ $nas->model ?? '-' }}</span>
                         </td>
                         <td>
-                            @if(($nas->status ?? 'online') === 'online')
-                                <span class="badge badge-online">Online</span>
-                            @else
-                                <span class="badge badge-offline">Offline</span>
-                            @endif
+                            <span class="badge" :class="status === 'online' ? 'badge-online' : 'badge-offline'" x-text="status === 'online' ? 'Online' : 'Offline'"></span>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:8px; min-width:80px;">
                                 <div style="flex:1; height:4px; background:var(--bg-elevated); border-radius:100px; overflow:hidden;">
-                                    <div style="width:{{ min(100,$cpu) }}%; height:100%; background:{{ $cpuColor }}; border-radius:100px;"></div>
+                                    <div :style="'width:' + Math.min(100, cpu) + '%; height:100%; border-radius:100px; background:' + getCpuColor()"></div>
                                 </div>
-                                <span style="font-size:11px; font-family:'JetBrains Mono',monospace; color:{{ $cpuColor }}; min-width:32px;">{{ $cpu }}%</span>
+                                <span style="font-size:11px; font-family:'JetBrains Mono',monospace; min-width:32px;" :style="'color:' + getCpuColor()" x-text="cpu + '%'"></span>
                             </div>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:8px; min-width:80px;">
                                 <div style="flex:1; height:4px; background:var(--bg-elevated); border-radius:100px; overflow:hidden;">
-                                    <div style="width:{{ min(100,$mem) }}%; height:100%; background:{{ $memColor }}; border-radius:100px;"></div>
+                                    <div :style="'width:' + Math.min(100, mem) + '%; height:100%; border-radius:100px; background:' + getMemColor()"></div>
                                 </div>
-                                <span style="font-size:11px; font-family:'JetBrains Mono',monospace; color:{{ $memColor }}; min-width:32px;">{{ $mem }}%</span>
+                                <span style="font-size:11px; font-family:'JetBrains Mono',monospace; min-width:32px;" :style="'color:' + getMemColor()" x-text="mem + '%'"></span>
                             </div>
                         </td>
                         <td>
-                            <span class="mono-mute">{{ $nas->uptime ?? 'N/A' }}</span>
+                            <span class="mono-mute" x-text="uptime"></span>
                         </td>
                         <td>
-                            <span class="mono-mute">{{ $nas->pelanggans_count ?? $nas->pelanggan_count ?? 0 }}</span>
+                            <span class="mono-mute" x-text="activeUsers"></span>
                         </td>
                         <td>
                             <button type="button" class="btn btn-ghost btn-xs"
@@ -308,8 +328,10 @@
                                     nama: '{{ addslashes($nas->nama) }}',
                                     ip_address: '{{ addslashes($nas->ip_address) }}',
                                     model: '{{ addslashes($nas->model ?? '') }}',
-                                    secret: '{{ addslashes($nas->secret ?? '') }}',
-                                    deskripsi: '{{ addslashes($nas->deskripsi ?? '') }}'
+                                    api_user: '{{ addslashes($nas->api_user ?? '') }}',
+                                    api_password: '{{ addslashes($nas->api_password ?? '') }}',
+                                    api_port: '{{ $nas->api_port ?? 8728 }}',
+                                    lokasi: '{{ addslashes($nas->lokasi ?? '') }}'
                                 }; editOpen = true">
                                 <i class="fas fa-pencil"></i> Edit
                             </button>
@@ -354,7 +376,8 @@
 </div>
 
 {{-- Edit NAS Modal --}}
-<div x-show="editOpen" class="modal-overlay" @click.self="editOpen=false" x-cloak>
+<template x-teleport="body">
+    <div x-show="editOpen" class="modal-overlay" @click.self="editOpen=false" x-cloak>
     <div class="modal">
         <div class="modal-header">
             <div class="modal-title"><i class="fas fa-pencil" style="color:var(--indigo);margin-right:8px;"></i>Edit NAS</div>
@@ -363,6 +386,18 @@
         <form :action="`{{ url('nas') }}/${editNas.id}`" method="POST">
             @csrf
             @method('PUT')
+            
+            @if ($errors->any())
+                <div style="padding:12px; background:var(--red-dim); color:var(--red); border-bottom:1px solid rgba(239,68,68,0.2); font-size:13px;">
+                    <strong>Gagal menyimpan!</strong> Periksa form:
+                    <ul style="margin-top:4px; margin-bottom:0; padding-left:20px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="modal-body">
                 <div class="form-row">
                     <div class="form-group">
@@ -388,15 +423,27 @@
                                :value="editNas.model" placeholder="Mikrotik RB3011">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">RADIUS Secret</label>
-                    <input type="text" name="secret" class="form-control form-control-mono"
-                           :value="editNas.secret" placeholder="shared_secret">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">API Username</label>
+                        <input type="text" name="api_user" class="form-control"
+                               :value="editNas.api_user" placeholder="Misal: admin">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Password</label>
+                        <input type="password" name="api_password" class="form-control"
+                               :value="editNas.api_password" placeholder="Biarkan kosong jika tidak ada">
+                    </div>
+                    <div class="form-group" style="max-width: 120px;">
+                        <label class="form-label">API Port</label>
+                        <input type="number" name="api_port" class="form-control form-control-mono"
+                               :value="editNas.api_port" placeholder="8728">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Deskripsi</label>
-                    <textarea name="deskripsi" class="form-control" rows="2"
-                              x-text="editNas.deskripsi" placeholder="Keterangan perangkat..."></textarea>
+                    <label class="form-label">Lokasi / Deskripsi</label>
+                    <textarea name="lokasi" class="form-control" rows="2"
+                              x-text="editNas.lokasi" placeholder="Keterangan atau lokasi perangkat..."></textarea>
                 </div>
             </div>
             <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
@@ -407,6 +454,60 @@
             </div>
         </form>
     </div>
+    </div>
+</template>
 </div>
-</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('nasCard', (id, initialCpu, initialMem, initialUptime, initialActiveUsers, initialStatus) => ({
+            id: id,
+            cpu: initialCpu,
+            mem: initialMem,
+            uptime: initialUptime,
+            activeUsers: initialActiveUsers,
+            status: initialStatus,
+            loading: true,
+
+            getCpuClass() {
+                return this.cpu >= 85 ? 'cpu-high' : (this.cpu >= 60 ? 'cpu-mid' : 'cpu-low');
+            },
+            getMemClass() {
+                return this.mem >= 85 ? 'mem-high' : (this.mem >= 60 ? 'mem-mid' : 'mem-low');
+            },
+            getCpuColor() {
+                return this.cpu >= 85 ? 'var(--red)' : (this.cpu >= 60 ? 'var(--amber)' : 'var(--green)');
+            },
+            getMemColor() {
+                return this.mem >= 85 ? 'var(--red)' : (this.mem >= 60 ? 'var(--amber)' : 'var(--sky)');
+            },
+            startPolling() {
+                this.fetchStats();
+                setInterval(() => this.fetchStats(), 1000);
+            },
+            
+            async fetchStats() {
+                this.loading = true;
+                try {
+                    const response = await fetch(`/nas/${this.id}/stats`);
+                    const data = await response.json();
+                    
+                    this.cpu = data.cpu;
+                    this.mem = data.mem;
+                    this.uptime = data.uptime;
+                    this.activeUsers = data.active_users;
+                    this.status = data.status;
+                    
+                    // Dispatch to window so the table row can listen
+                    this.$dispatch('nas-updated', { id: this.id, ...data });
+                } catch (error) {
+                    console.error('Failed to fetch NAS stats:', error);
+                    this.status = 'offline';
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }));
+    });
+</script>
 @endsection

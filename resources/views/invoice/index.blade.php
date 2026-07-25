@@ -30,6 +30,7 @@
         </button>
 
         {{-- ── Modal Tambah Invoice ── --}}
+        <template x-teleport="body">
         <div x-show="open" x-cloak class="modal-overlay" @click.self="open = false" style="display:none;">
             <div class="modal modal-lg" @click.stop>
                 <div class="modal-header">
@@ -127,6 +128,7 @@
                 </form>
             </div>
         </div>
+        </template>
     </div>
 </div>
 
@@ -165,7 +167,7 @@
 </div>
 
 {{-- ── Main Card ── --}}
-<div class="card">
+<div class="card" x-data="{ modalLunas: null }">
     {{-- Toolbar --}}
     <form method="GET" action="{{ route('invoice.index') }}">
         <div class="table-toolbar">
@@ -293,14 +295,9 @@
                             </a>
                             {{-- Tandai Lunas --}}
                             @if($inv->status !== 'paid')
-                                <form method="POST"
-                                      action="{{ route('invoice.lunas', $inv->id) }}"
-                                      onsubmit="return confirm('Tandai invoice {{ $inv->no_invoice }} sebagai Lunas?')">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success btn-xs" title="Tandai Lunas">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                </form>
+                                <button type="button" @click="modalLunas = {{ $inv->id }}" class="btn btn-success btn-xs" title="Tandai Lunas">
+                                    <i class="fas fa-check"></i>
+                                </button>
                             @endif
                         </div>
                     </td>
@@ -327,9 +324,48 @@
     </div>
 
     {{-- Pagination --}}
+    {{-- Pagination --}}
     @if($invoices->hasPages())
         {{ $invoices->appends(request()->query())->links() }}
     @endif
+
+    {{-- Modal Lunas Cepat --}}
+    <template x-teleport="body">
+        <div x-show="modalLunas !== null" x-cloak class="modal-overlay" @click.self="modalLunas = null" style="display:flex;">
+            <div class="modal" @click.stop>
+                <div class="modal-header">
+                    <span class="modal-title"><i class="fas fa-money-bill-transfer" style="color:var(--green);margin-right:8px;"></i>Pilih Metode Pembayaran</span>
+                    <button @click="modalLunas = null" class="modal-close"><i class="fas fa-xmark"></i></button>
+                </div>
+                <form method="POST" :action="'{{ url('invoice') }}/' + modalLunas + '/lunas'">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Metode Pembayaran <span style="color:var(--red);">*</span></label>
+                            @php
+                                $rekeningBanks = json_decode(\App\Models\SystemSetting::get('rekening_banks', '[]'), true);
+                            @endphp
+                            <select name="metode" class="form-control" required>
+                                <option value="cash">Cash (Tunai)</option>
+                                @foreach($rekeningBanks as $rek)
+                                    @php
+                                        $bank = $rek['bank'] ?? 'Bank';
+                                        $an = $rek['an'] ?? '';
+                                        $label = "Transfer $bank" . ($an ? " (a.n $an)" : "");
+                                    @endphp
+                                    <option value="{{ $label }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-ghost" @click="modalLunas = null">Batal</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Konfirmasi Lunas</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
 </div>
 
 {{-- Auto-open modal if there are validation errors --}}

@@ -28,11 +28,11 @@
         
         <table class="table" style="width: 100%;">
             <tr>
-                <td style="color: var(--text-4); width: 150px;">Kategori</td>
+                <td style="color: var(--text-2); width: 150px;">Kategori</td>
                 <td><strong>{{ $ticket->kategori }}</strong></td>
             </tr>
             <tr>
-                <td style="color: var(--text-4);">Dilaporkan Oleh</td>
+                <td style="color: var(--text-2);">Dilaporkan Oleh</td>
                 <td>
                     @if($ticket->pelanggan_id)
                         <a href="{{ route('pelanggan.show', $ticket->pelanggan_id) }}" style="color: #60a5fa; text-decoration: none;">{{ $ticket->pelanggan->nama }}</a>
@@ -42,20 +42,20 @@
                 </td>
             </tr>
             <tr>
-                <td style="color: var(--text-4);">No HP / WA</td>
+                <td style="color: var(--text-2);">No HP / WA</td>
                 <td>{{ $ticket->no_hp ?: ($ticket->pelanggan ? $ticket->pelanggan->no_wa : '-') }}</td>
             </tr>
             <tr>
-                <td style="color: var(--text-4);">Alamat / Patokan</td>
+                <td style="color: var(--text-2);">Alamat / Patokan</td>
                 <td>
                     {{ $ticket->alamat ?: ($ticket->pelanggan ? $ticket->pelanggan->alamat : '-') }}
                     @if($ticket->alamat && $ticket->pelanggan)
-                        <br><small style="color: var(--text-4);">Alamat Pelanggan Asli: {{ $ticket->pelanggan->alamat }}</small>
+                        <br><small style="color: var(--text-2);">Alamat Pelanggan Asli: {{ $ticket->pelanggan->alamat }}</small>
                     @endif
                 </td>
             </tr>
             <tr>
-                <td style="color: var(--text-4);">Koordinat Lokasi</td>
+                <td style="color: var(--text-2);">Koordinat Lokasi</td>
                 <td>
                     @if($ticket->latitude && $ticket->longitude)
                         <span class="mono">{{ $ticket->latitude }}, {{ $ticket->longitude }}</span>
@@ -73,11 +73,11 @@
                 </td>
             </tr>
             <tr>
-                <td style="color: var(--text-4);">Tgl Dibuat</td>
+                <td style="color: var(--text-2);">Tgl Dibuat</td>
                 <td>{{ $ticket->created_at->format('d M Y H:i') }}</td>
             </tr>
             <tr>
-                <td style="color: var(--text-4);">Jadwal Kunjungan</td>
+                <td style="color: var(--text-2);">Jadwal Kunjungan</td>
                 <td>
                     @if($ticket->jadwal_kunjungan)
                         <span style="color: #f59e0b;"><i class="far fa-calendar-alt"></i> {{ \Carbon\Carbon::parse($ticket->jadwal_kunjungan)->format('d M Y H:i') }}</span>
@@ -87,12 +87,12 @@
                 </td>
             </tr>
             <tr>
-                <td style="color: var(--text-4);">Teknisi Ditugaskan</td>
+                <td style="color: var(--text-2);">Teknisi Ditugaskan</td>
                 <td>
                     @if($ticket->teknisi)
                         {{ $ticket->teknisi->name }}
                         @if($ticket->nama_partner)
-                            <br><small style="color: var(--text-4);"><i class="fas fa-user-friends"></i> Partner: {{ $ticket->nama_partner }}</small>
+                            <br><small style="color: var(--text-2);"><i class="fas fa-user-friends"></i> Partner: {{ $ticket->nama_partner }}</small>
                         @endif
                     @else
                         <span style="color: #ef4444;">Belum ada teknisi</span>
@@ -102,7 +102,7 @@
         </table>
         
         <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-top: 15px;">
-            <p style="color: var(--text-4); margin-top:0;"><strong>Deskripsi Kendala/Pekerjaan:</strong></p>
+            <p style="color: var(--text-2); margin-top:0;"><strong>Deskripsi Kendala/Pekerjaan:</strong></p>
             <p style="margin-bottom:0;">{{ $ticket->deskripsi_pekerjaan }}</p>
         </div>
     </div>
@@ -171,7 +171,7 @@
 
             <div class="form-group mb-20" id="alatSection" style="display: {{ $ticket->status == 'Selesai' ? 'block' : 'none' }};">
                 <label style="color: #10b981;"><i class="fas fa-tools"></i> Laporan Penggunaan Alat (Wajib diisi jika Selesai)</label>
-                <p style="font-size: 12px; color: var(--text-4);">Contoh: Kabel 50m, 1 Modem ZTE, 1 Splitter, 1 Patchcord</p>
+                <p style="font-size: 12px; color: var(--text-2);">Contoh: Kabel 50m, 1 Modem ZTE, 1 Splitter, 1 Patchcord</p>
                 <textarea name="penggunaan_alat" class="form-control" rows="5" placeholder="Tulis rincian alat yang dipakai di sini...">{{ $ticket->penggunaan_alat }}</textarea>
             </div>
 

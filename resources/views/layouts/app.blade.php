@@ -766,17 +766,13 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
   
   .top-nav { 
     padding: 0 12px 12px; 
-    justify-content: flex-start; 
-    flex-wrap: nowrap; 
-    overflow-x: auto; 
-    -webkit-overflow-scrolling: touch; 
-    scrollbar-width: none; 
-    gap: 8px;
+    justify-content: center; 
+    flex-wrap: wrap; 
+    gap: 6px;
   }
-  .top-nav::-webkit-scrollbar { display: none; }
   .nav-item { 
-    padding: 8px 12px; 
-    font-size: 12px; 
+    padding: 6px 10px; 
+    font-size: 11.5px; 
     white-space: nowrap; 
     flex-shrink: 0;
   }
@@ -1106,6 +1102,171 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('PWA ServiceWorker failed', err));
   });
 }
+
+// ═══ AUTO LOGOUT (IDLE TIMER) ═══
+(function() {
+  let idleTime = 0;
+  const idleTimeout = 30 * 60; // 30 menit (dalam detik)
+  const warningTime = 29 * 60; // Tampilkan peringatan di menit ke-29
+
+  function resetIdleTimer() {
+    idleTime = 0;
+    const warningEl = document.getElementById('idle-warning');
+    if (warningEl) warningEl.style.display = 'none';
+  }
+
+  // Deteksi aktivitas user
+  window.onload = resetIdleTimer;
+  window.onmousemove = resetIdleTimer;
+  window.onmousedown = resetIdleTimer;
+  window.ontouchstart = resetIdleTimer;
+  window.onclick = resetIdleTimer;
+  window.onkeydown = resetIdleTimer;
+  window.addEventListener('scroll', resetIdleTimer, true);
+
+  setInterval(function() {
+    idleTime++;
+    if (idleTime >= idleTimeout) {
+      // Auto logout form submit
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{{ route("logout") }}';
+      
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = '_token';
+      csrf.value = document.querySelector('meta[name="csrf-token"]').content;
+      
+      form.appendChild(csrf);
+      document.body.appendChild(form);
+      form.submit();
+    } else if (idleTime >= warningTime) {
+      let warningEl = document.getElementById('idle-warning');
+      if (!warningEl) {
+        warningEl = document.createElement('div');
+        warningEl.id = 'idle-warning';
+        warningEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:var(--red);color:white;text-align:center;padding:12px;z-index:99999;font-weight:bold;font-family:sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation: slideDown 0.3s ease-out;';
+        document.body.appendChild(warningEl);
+      }
+      warningEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Sesi Anda akan berakhir dalam ${idleTimeout - idleTime} detik karena tidak ada aktivitas. Gerakkan mouse atau sentuh layar untuk membatalkan.`;
+      warningEl.style.display = 'block';
+    }
+  }, 1000);
+})();
+// ═══ LIVE UPDATES (AJAX POLLING) ═══
+(function() {
+  let lastNotifId = null;
+  let lastTicketTime = null;
+  const isTicketsPage = window.location.pathname.includes('/tickets');
+
+  // Insert keyframes for toast
+  const style = document.createElement('style');
+  style.innerHTML = `@keyframes slideUpToast { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`;
+  document.head.appendChild(style);
+
+  // Audio instance global agar bisa di-unlock
+  const notifAudio = new Audio('{{ asset("audio/notif.mp3") }}');
+
+  // Trick untuk membuka blokir Auto-play di HP (Safari/Chrome Mobile)
+  // Harus ada 1x interaksi user (klik/sentuh) sebelum audio diizinkan bermain sendiri
+  let audioUnlocked = false;
+  document.body.addEventListener('click', function() {
+      if (!audioUnlocked) {
+          notifAudio.volume = 0; // Mainkan tanpa suara dulu
+          notifAudio.play().then(() => {
+              notifAudio.pause();
+              notifAudio.currentTime = 0;
+              notifAudio.volume = 1; // Kembalikan volume normal
+              audioUnlocked = true;
+          }).catch(e => console.log('Audio unlock failed', e));
+      }
+  }, { once: true });
+
+  function playNotificationSound() {
+    try {
+        // Reset waktu ke awal jika sedang dimainkan, lalu play
+        notifAudio.currentTime = 0;
+        notifAudio.play().catch(e => console.log('Audio autoplay blocked'));
+    } catch (e) {
+        console.log('Error playing audio');
+    }
+  }
+
+  function showToast(message, type = 'info', actionHtml = '') {
+    playNotificationSound(); // Mainkan suara saat toast muncul
+
+    const container = document.getElementById('live-toast-container') || (function() {
+      const c = document.createElement('div');
+      c.id = 'live-toast-container';
+      c.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;';
+      document.body.appendChild(c);
+      return c;
+    })();
+
+    const toast = document.createElement('div');
+    const bg = type === 'warning' ? '#f59e0b' : (type === 'danger' ? '#ef4444' : '#3b82f6');
+    toast.style.cssText = `background:${bg};color:white;padding:12px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:slideUpToast 0.3s ease-out;display:flex;align-items:center;gap:10px;font-family:sans-serif;font-size:14px;`;
+    toast.innerHTML = `<span>${message}</span> ${actionHtml}`;
+    container.appendChild(toast);
+
+    if (!actionHtml) {
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s';
+        setTimeout(() => toast.remove(), 500);
+      }, 5000);
+    }
+  }
+
+  function fetchUpdates() {
+    fetch('{{ route("live-updates") }}', {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      // Update badge
+      const iconBtn = document.querySelector('.icon-btn[href*="notifikasi"]');
+      let badge = iconBtn ? iconBtn.querySelector('.notif-badge') : null;
+      
+      if (data.unread_count > 0) {
+        if (badge) {
+          badge.textContent = data.unread_count > 99 ? '99' : data.unread_count;
+        } else if (iconBtn) {
+          iconBtn.innerHTML += `<span class="notif-badge">${data.unread_count > 99 ? '99' : data.unread_count}</span>`;
+        }
+      } else if (badge) {
+        badge.remove();
+      }
+
+      // Check new notification
+      if (lastNotifId === null) {
+        lastNotifId = data.latest_notif_id;
+      } else if (data.latest_notif_id > lastNotifId) {
+        lastNotifId = data.latest_notif_id;
+        showToast(`🔔 Notifikasi Baru: ${data.latest_notif_title}`, data.latest_notif_type);
+      }
+
+      // Check new ticket update
+      if (lastTicketTime === null) {
+        lastTicketTime = data.latest_ticket_time;
+      } else if (data.latest_ticket_time > lastTicketTime) {
+        lastTicketTime = data.latest_ticket_time;
+        if (isTicketsPage) {
+          showToast(`🛠️ Papan Job Order telah berubah.`, 'info', `<button onclick="window.location.reload()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Muat Ulang</button>`);
+        }
+      }
+    })
+    .catch(err => console.error('Live Updates Error:', err));
+  }
+
+  // Fetch every 5 seconds
+  setInterval(fetchUpdates, 5000);
+  // Initial fetch delayed slightly to let page load completely
+  setTimeout(fetchUpdates, 1000);
+})();
 </script>
 </body>
 </html>

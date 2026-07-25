@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Dashboard (all roles)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/live-updates', [DashboardController::class, 'liveUpdates'])->name('live-updates');
 
     // Global Search (all roles)
     Route::get('/search/live', [SearchController::class, 'live'])->name('search.live');
@@ -68,7 +69,8 @@ Route::middleware(['auth'])->group(function () {
     // ── NAS (Admin + Teknisi)
     Route::middleware('role:admin,teknisi')->group(function () {
         Route::get('/nas', [NasController::class, 'index'])->name('nas.index');
-        Route::resource('nas', NasController::class)->except(['index']);
+        Route::get('/nas/{nas}/stats', [NasController::class, 'stats'])->name('nas.stats');
+        Route::resource('nas', NasController::class)->parameters(['nas' => 'nas'])->except(['index']);
     });
 
     // ── Billing / Invoice (Admin + Kasir)
@@ -102,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware([\App\Http\Middleware\RoleMiddleware::class.':admin,kasir'])->group(function () {
         Route::get('/support-tickets', [\App\Http\Controllers\SupportTicketController::class, 'index'])->name('support-tickets.index');
         Route::post('/support-tickets/{id}/status', [\App\Http\Controllers\SupportTicketController::class, 'updateStatus'])->name('support-tickets.status');
+        Route::post('/support-tickets/{id}/create-job-order', [\App\Http\Controllers\SupportTicketController::class, 'createJobOrder'])->name('support-tickets.create-job-order');
     });
 
     // Pengaturan System

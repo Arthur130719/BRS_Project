@@ -17,6 +17,7 @@ class PaketController extends Controller
     {
         $validated = $request->validate([
             'nama'           => 'required|max:100',
+            'mikrotik_profile' => 'nullable|max:100',
             'kecepatan_down' => 'required|integer|min:1',
             'kecepatan_up'   => 'required|integer|min:1',
             'harga'          => 'required|numeric|min:0',
@@ -30,6 +31,7 @@ class PaketController extends Controller
     {
         $validated = $request->validate([
             'nama'           => 'required|max:100',
+            'mikrotik_profile' => 'nullable|max:100',
             'kecepatan_down' => 'required|integer|min:1',
             'kecepatan_up'   => 'required|integer|min:1',
             'harga'          => 'required|numeric|min:0',

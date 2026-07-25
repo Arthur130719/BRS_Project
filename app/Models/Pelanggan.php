@@ -19,6 +19,7 @@ class Pelanggan extends Authenticatable
         'ip_address', 'ip_pool',
         'status', 'isolir_by', 'isolir_at',
         'tgl_aktif', 'expiry',
+        'avatar', 'banner', 'phone_2',
     ];
 
     protected $casts = [

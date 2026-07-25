@@ -11,8 +11,8 @@
   </div>
   <div x-data="{ open: false }">
     <button @click="open=true" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah Paket</button>
-
-    <div x-show="open" class="modal-overlay" @click.self="open=false" x-cloak>
+    <template x-teleport="body">
+      <div x-show="open" class="modal-overlay" @click.self="open=false" x-cloak>
       <div class="modal">
         <div class="modal-header">
           <span class="modal-title">Tambah Paket Baru</span>
@@ -21,10 +21,17 @@
         <form method="POST" action="{{ route('paket.store') }}">
           @csrf
           <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Nama Paket</label>
-              <input type="text" name="nama" class="form-control" value="{{ old('nama') }}" required placeholder="e.g. Home 20 Mbps">
-              @error('nama')<span class="form-error">{{ $message }}</span>@enderror
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nama Paket (di Web)</label>
+                <input type="text" name="nama" class="form-control" value="{{ old('nama') }}" required placeholder="e.g. Home 20 Mbps">
+                @error('nama')<span class="form-error">{{ $message }}</span>@enderror
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nama Profil (di MikroTik)</label>
+                <input type="text" name="mikrotik_profile" class="form-control" value="{{ old('mikrotik_profile') }}" placeholder="e.g. PAKET-200">
+                @error('mikrotik_profile')<span class="form-error">{{ $message }}</span>@enderror
+              </div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -52,7 +59,7 @@
           </div>
         </form>
       </div>
-    </div>
+    </template>
   </div>
 </div>
 
@@ -96,7 +103,8 @@
     </div>
 
     {{-- Edit Modal --}}
-    <div x-show="editOpen" class="modal-overlay" @click.self="editOpen=false" x-cloak>
+    <template x-teleport="body">
+      <div x-show="editOpen" class="modal-overlay" @click.self="editOpen=false" x-cloak>
       <div class="modal">
         <div class="modal-header">
           <span class="modal-title">Edit Paket — {{ $paket->nama }}</span>
@@ -105,9 +113,15 @@
         <form method="POST" action="{{ route('paket.update', $paket->id) }}">
           @csrf @method('PUT')
           <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Nama Paket</label>
-              <input type="text" name="nama" class="form-control" value="{{ $paket->nama }}" required>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nama Paket (Web)</label>
+                <input type="text" name="nama" class="form-control" value="{{ $paket->nama }}" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nama Profil (MikroTik)</label>
+                <input type="text" name="mikrotik_profile" class="form-control" value="{{ $paket->mikrotik_profile }}">
+              </div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -142,6 +156,7 @@
         </form>
       </div>
     </div>
+    </template>
   </div>
   @empty
     <div class="card" style="grid-column:1/-1;">

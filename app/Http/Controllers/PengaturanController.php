@@ -46,23 +46,29 @@ class PengaturanController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
-        $request->validate([
-            'auto_isolir_enabled' => 'nullable|boolean',
-            'grace_period_days'   => 'nullable|integer|min:0|max:30',
-            'isolir_time'         => 'nullable|date_format:H:i',
-            'bank_bca'            => 'nullable|string|max:100',
-            'bank_bri'            => 'nullable|string|max:100',
-            'bank_mandiri'        => 'nullable|string|max:100',
-            'bank_bni'            => 'nullable|string|max:100',
-        ]);
+        if ($request->input('section') === 'bank') {
+            $request->validate([
+                'rekening'            => 'nullable|array',
+                'rekening.*.bank'     => 'required_with:rekening|string|max:100',
+                'rekening.*.norek'    => 'required_with:rekening|string|max:100',
+                'rekening.*.an'       => 'required_with:rekening|string|max:150',
+            ]);
+            
+            $rekeningData = $request->input('rekening', []);
+            SystemSetting::set('rekening_banks', json_encode(array_values($rekeningData)));
+            
+        } else {
+            // Isolir config
+            $request->validate([
+                'auto_isolir_enabled' => 'nullable|boolean',
+                'grace_period_days'   => 'nullable|integer|min:0|max:30',
+                'isolir_time'         => 'nullable|date_format:H:i',
+            ]);
 
-        SystemSetting::set('auto_isolir_enabled', $request->boolean('auto_isolir_enabled') ? '1' : '0');
-        SystemSetting::set('grace_period_days',   $request->input('grace_period_days', 0));
-        SystemSetting::set('isolir_time',          $request->input('isolir_time', '00:01'));
-        SystemSetting::set('bank_bca',             $request->input('bank_bca', ''));
-        SystemSetting::set('bank_bri',             $request->input('bank_bri', ''));
-        SystemSetting::set('bank_mandiri',         $request->input('bank_mandiri', ''));
-        SystemSetting::set('bank_bni',             $request->input('bank_bni', ''));
+            SystemSetting::set('auto_isolir_enabled', $request->boolean('auto_isolir_enabled') ? '1' : '0');
+            SystemSetting::set('grace_period_days',   $request->input('grace_period_days', 0));
+            SystemSetting::set('isolir_time',          $request->input('isolir_time', '00:01'));
+        }
 
         return redirect()->route('pengaturan.index')
             ->with('success', 'Pengaturan berhasil disimpan.');

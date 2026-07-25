@@ -51,14 +51,15 @@
         @endif
 
         {{-- ── MODAL ISOLIR ── --}}
-        <div x-show="isolirModal"
-             x-transition:enter="transition ease-out duration-150"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-100"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="modal-overlay"
+        <template x-teleport="body">
+            <div x-show="isolirModal"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="modal-overlay"
              @click.self="isolirModal = false"
              style="display:none;">
             <div class="modal" @click.stop>
@@ -93,16 +94,18 @@
                 </form>
             </div>
         </div>
+        </template>
 
         {{-- ── MODAL AKTIFKAN ── --}}
-        <div x-show="aktifkanModal"
-             x-transition:enter="transition ease-out duration-150"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-100"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             class="modal-overlay"
+        <template x-teleport="body">
+            <div x-show="aktifkanModal"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="modal-overlay"
              @click.self="aktifkanModal = false"
              style="display:none;">
             <div class="modal" @click.stop>
@@ -136,6 +139,7 @@
                 </form>
             </div>
         </div>
+        </template>
 
     </div>
 </div>
@@ -167,7 +171,12 @@
             </div>
             <div class="info-row">
                 <span class="key">No. Telepon</span>
-                <span class="val">{{ $pelanggan->phone ?? '—' }}</span>
+                <span class="val">
+                    {{ $pelanggan->phone ?? '—' }}
+                    @if($pelanggan->phone_2)
+                        <br><span style="font-size:11px;color:var(--text-3);">Alt: {{ $pelanggan->phone_2 }}</span>
+                    @endif
+                </span>
             </div>
             <div class="info-row">
                 <span class="key">Alamat</span>

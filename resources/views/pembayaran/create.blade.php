@@ -19,16 +19,12 @@
             return this.metode && this.metode !== 'cash';
         },
         get isTransferLain() {
-            return this.metode === 'transfer_lain';
+            return this.metode === 'Transfer Lain';
         },
         get metodeLabelMap() {
             return {
-                'cash':             'Cash',
-                'transfer_bca':     'Transfer BCA',
-                'transfer_bri':     'Transfer BRI',
-                'transfer_mandiri': 'Transfer Mandiri',
-                'transfer_bni':     'Transfer BNI',
-                'transfer_lain':    'Transfer Lain',
+                'cash': 'Cash',
+                // Any other method will fallback or can be mapped dynamically if needed.
             };
         }
     }"
@@ -111,14 +107,29 @@
                         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
 
                             @php
+                                $rekeningBanks = json_decode(\App\Models\SystemSetting::get('rekening_banks', '[]'), true);
                                 $metodeOptions = [
-                                    'cash'             => ['icon' => 'fas fa-money-bill-wave', 'label' => 'Cash',             'color' => 'var(--green)'],
-                                    'transfer_bca'     => ['icon' => 'fas fa-building-columns', 'label' => 'Transfer BCA',     'color' => 'var(--sky)'],
-                                    'transfer_bri'     => ['icon' => 'fas fa-building-columns', 'label' => 'Transfer BRI',     'color' => 'var(--sky)'],
-                                    'transfer_mandiri' => ['icon' => 'fas fa-building-columns', 'label' => 'Transfer Mandiri', 'color' => 'var(--amber)'],
-                                    'transfer_bni'     => ['icon' => 'fas fa-building-columns', 'label' => 'Transfer BNI',     'color' => 'var(--indigo)'],
-                                    'transfer_lain'    => ['icon' => 'fas fa-ellipsis',          'label' => 'Transfer Lain',    'color' => 'var(--text-2)'],
+                                    'cash' => ['icon' => 'fas fa-money-bill-wave', 'label' => 'Cash', 'color' => 'var(--green)'],
                                 ];
+                                foreach($rekeningBanks as $rek) {
+                                    $bankName = strtolower($rek['bank'] ?? '');
+                                    $bank = $rek['bank'] ?? 'Bank';
+                                    $an = $rek['an'] ?? '';
+                                    
+                                    $label = "Transfer $bank" . ($an ? " (a.n $an)" : "");
+                                    $val = $label;
+                                    
+                                    $color = 'var(--sky)';
+                                    if (str_contains($bankName, 'bca') || str_contains($bankName, 'bri')) $color = '#00529C';
+                                    if (str_contains($bankName, 'mandiri')) $color = '#F2A900';
+                                    if (str_contains($bankName, 'bni')) $color = '#F15A23';
+                                    if (str_contains($bankName, 'dana') || str_contains($bankName, 'ovo') || str_contains($bankName, 'gopay')) $color = '#118EEA';
+                                    
+                                    $icon = (str_contains($bankName, 'dana') || str_contains($bankName, 'ovo') || str_contains($bankName, 'gopay')) ? 'fas fa-wallet' : 'fas fa-building-columns';
+                                    
+                                    $metodeOptions[$val] = ['icon' => $icon, 'label' => $label, 'color' => $color];
+                                }
+                                $metodeOptions['Transfer Lain'] = ['icon' => 'fas fa-ellipsis', 'label' => 'Transfer Lain', 'color' => 'var(--text-2)'];
                             @endphp
 
                             @foreach($metodeOptions as $val => $opt)

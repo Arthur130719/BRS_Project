@@ -5,10 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\IsolirLog;
 use App\Models\Notifikasi;
 use App\Models\Pelanggan;
+use App\Services\MikrotikService;
 use Illuminate\Http\Request;
 
 class IsolirController extends Controller
 {
+    protected $mikrotikService;
+
+    public function __construct(MikrotikService $mikrotikService)
+    {
+        $this->mikrotikService = $mikrotikService;
+    }
+
     public function isolir(Pelanggan $pelanggan, Request $request)
     {
         $validated = $request->validate([
@@ -20,6 +28,11 @@ class IsolirController extends Controller
             'isolir_by' => 'manual:' . auth()->id(),
             'isolir_at' => now(),
         ]);
+
+        // Change to Isolir profile in MikroTik if NAS is set
+        if ($pelanggan->nas) {
+            $this->mikrotikService->changePppoeProfile($pelanggan->nas, $pelanggan->username_pppoe, 'isolir');
+        }
 
         $hasUnpaid = \App\Models\Invoice::where('pelanggan_id', $pelanggan->id)
             ->where('status', 'unpaid')
@@ -65,6 +78,12 @@ class IsolirController extends Controller
             'isolir_by' => null,
             'isolir_at' => null,
         ]);
+
+        // Change back to normal package profile in MikroTik if NAS is set
+        if ($pelanggan->nas && $pelanggan->paket) {
+            $profileName = $pelanggan->paket->mikrotik_profile ?: $pelanggan->paket->nama;
+            $this->mikrotikService->changePppoeProfile($pelanggan->nas, $pelanggan->username_pppoe, $profileName);
+        }
 
         IsolirLog::create([
             'pelanggan_id' => $pelanggan->id,

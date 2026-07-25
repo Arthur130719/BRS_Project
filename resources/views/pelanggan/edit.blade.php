@@ -28,9 +28,19 @@
                  value="{{ old('username_pppoe', $pelanggan->username_pppoe) }}" required>
           @error('username_pppoe')<div class="form-error">{{ $message }}</div>@enderror
         </div>
-        <div class="form-group">
-          <label class="form-label">Password PPPoE <span style="color:var(--text-3);font-weight:400;">(kosongkan jika tidak diubah)</span></label>
-          <input type="text" name="password_pppoe" class="form-control form-control-mono" placeholder="••••••">
+        <div class="form-group" x-data="{ showPwd: false }">
+          <label class="form-label">Password PPPoE Saat Ini</label>
+          <div style="display:flex; gap:10px; align-items:center; margin-bottom: 12px;">
+            <div class="form-control form-control-mono" style="background:var(--surface-2); display:flex; align-items:center; flex:1;">
+               <span x-show="!showPwd">••••••••</span>
+               <span x-show="showPwd">{{ $pelanggan->password_pppoe }}</span>
+            </div>
+            <button type="button" class="btn btn-ghost" @click="showPwd = !showPwd">
+               <i class="fas" :class="showPwd ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
+          </div>
+          <label class="form-label">Ganti Password PPPoE <span style="color:var(--text-3);font-weight:400;">(kosongkan jika tidak diubah)</span></label>
+          <input type="text" name="password_pppoe" class="form-control form-control-mono" placeholder="Ketik password baru disini...">
           @error('password_pppoe')<div class="form-error">{{ $message }}</div>@enderror
         </div>
         <div class="form-group">
@@ -87,27 +97,23 @@
                  value="{{ old('nama', $pelanggan->nama) }}" required>
           @error('nama')<div class="form-error">{{ $message }}</div>@enderror
         </div>
-        <div class="form-group">
-          <label class="form-label">No. Telepon</label>
-          <input type="text" name="phone" class="form-control form-control-mono"
-                 value="{{ old('phone', $pelanggan->phone) }}">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">No. Telepon</label>
+            <input type="text" name="phone" class="form-control form-control-mono"
+                   value="{{ old('phone', $pelanggan->phone) }}">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">No. Telepon Alt.</label>
+            <input type="text" name="phone_2" class="form-control form-control-mono"
+                   value="{{ old('phone_2', $pelanggan->phone_2) }}" placeholder="Opsional">
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Alamat Instalasi</label>
           <textarea name="alamat" class="form-control" rows="3">{{ old('alamat', $pelanggan->alamat) }}</textarea>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Latitude</label>
-            <input type="text" name="latitude" class="form-control" value="{{ old('latitude', $pelanggan->latitude) }}" placeholder="-6.12345678">
-            @error('latitude')<div class="form-error">{{ $message }}</div>@enderror
-          </div>
-          <div class="form-group">
-            <label class="form-label">Longitude</label>
-            <input type="text" name="longitude" class="form-control" value="{{ old('longitude', $pelanggan->longitude) }}" placeholder="106.12345678">
-            @error('longitude')<div class="form-error">{{ $message }}</div>@enderror
-          </div>
-        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Tanggal Aktif</label>

@@ -100,12 +100,24 @@ class InvoiceController extends Controller
         return redirect()->route('invoice.index')->with('success', 'Invoice berhasil dihapus.');
     }
 
-    public function tandaiLunas(int $id)
+    public function tandaiLunas(Request $request, int $id, \App\Services\MikrotikService $mikrotikService)
     {
         $invoice = Invoice::findOrFail($id);
         $invoice->update([
             'status'    => 'paid',
             'tgl_bayar' => today(),
+        ]);
+
+        $metode = $request->input('metode', 'cash');
+
+        // Buat record pembayaran otomatis
+        \App\Models\Pembayaran::create([
+            'invoice_id' => $invoice->id,
+            'nominal'    => $invoice->nominal,
+            'metode'     => $metode,
+            'tgl_bayar'  => today(),
+            'keterangan' => 'Ditandai lunas cepat via menu Invoice',
+            'user_id'    => auth()->id(),
         ]);
 
         // Periksa apakah pelanggan perlu diaktifkan kembali
@@ -126,6 +138,11 @@ class InvoiceController extends Controller
                     'user_id'      => auth()->id(),
                     'alasan'       => 'Diaktifkan otomatis setelah semua tagihan lunas',
                 ]);
+                
+                if ($pelanggan->nas) {
+                    $profileName = $pelanggan->paket->mikrotik_profile ?: $pelanggan->paket->nama;
+                    $mikrotikService->changePppoeProfile($pelanggan->nas, $pelanggan->username_pppoe, $profileName);
+                }
             }
         }
 

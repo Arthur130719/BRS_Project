@@ -9,17 +9,51 @@
     <h1>Invoice <span class="mono" style="font-size:18px;">{{ $invoice->no_invoice }}</span></h1>
     <p>Periode {{ $invoice->periode }} — {{ $invoice->pelanggan->nama }}</p>
   </div>
-  <div class="page-header-actions">
+  <div class="page-header-actions" x-data="{ modalLunas: false }">
     <a href="{{ route('invoice.pdf', $invoice->id) }}" class="btn btn-ghost" target="_blank">
       <i class="fas fa-file-pdf"></i> Export PDF
     </a>
     @if($invoice->status !== 'paid')
-      <form method="POST" action="{{ route('invoice.lunas', $invoice->id) }}" style="display:inline">
-        @csrf
-        <button type="submit" class="btn btn-success" onclick="return confirm('Tandai invoice ini sebagai lunas?')">
+        <button type="button" @click="modalLunas = true" class="btn btn-success">
           <i class="fas fa-check-double"></i> Tandai Lunas
         </button>
-      </form>
+
+        <template x-teleport="body">
+            <div x-show="modalLunas" x-cloak class="modal-overlay" @click.self="modalLunas = false" style="display:none;">
+                <div class="modal" @click.stop>
+                    <div class="modal-header">
+                        <span class="modal-title"><i class="fas fa-money-bill-transfer" style="color:var(--green);margin-right:8px;"></i>Pilih Metode Pembayaran</span>
+                        <button @click="modalLunas = false" class="modal-close"><i class="fas fa-xmark"></i></button>
+                    </div>
+                    <form method="POST" action="{{ route('invoice.lunas', $invoice->id) }}">
+                        @csrf
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-label">Metode Pembayaran <span style="color:var(--red);">*</span></label>
+                                @php
+                                    $rekeningBanks = json_decode(\App\Models\SystemSetting::get('rekening_banks', '[]'), true);
+                                @endphp
+                                <select name="metode" class="form-control" required>
+                                    <option value="cash">Cash (Tunai)</option>
+                                    @foreach($rekeningBanks as $rek)
+                                        @php
+                                            $bank = $rek['bank'] ?? 'Bank';
+                                            $an = $rek['an'] ?? '';
+                                            $label = "Transfer $bank" . ($an ? " (a.n $an)" : "");
+                                        @endphp
+                                        <option value="{{ $label }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-ghost" @click="modalLunas = false">Batal</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Konfirmasi Lunas</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
     @endif
     <a href="{{ route('invoice.index') }}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Kembali</a>
   </div>

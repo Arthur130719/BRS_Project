@@ -35,29 +35,57 @@
         <span class="badge badge-active" style="font-size:12px;">Aktif</span>
     </div>
     <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
-            <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div style="font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;">Bank BCA</div>
-                    <i class="fas fa-building-columns" style="color:var(--sky);font-size:14px;"></i>
+        @php
+            $rekeningBanks = json_decode(\App\Models\SystemSetting::get('rekening_banks', '[]'), true);
+        @endphp
+        
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+            @forelse($rekeningBanks as $rek)
+                @php
+                    $bankName = strtolower($rek['bank'] ?? '');
+                    if (str_contains($bankName, 'bca')) {
+                        $color = '#0066AE'; // BCA Blue
+                        $icon = 'fa-building-columns';
+                    } elseif (str_contains($bankName, 'mandiri')) {
+                        $color = '#F2A900'; // Mandiri Yellow
+                        $icon = 'fa-building-columns';
+                    } elseif (str_contains($bankName, 'bri')) {
+                        $color = '#00529C'; // BRI Blue
+                        $icon = 'fa-building-columns';
+                    } elseif (str_contains($bankName, 'bni')) {
+                        $color = '#F15A23'; // BNI Orange
+                        $icon = 'fa-building-columns';
+                    } elseif (str_contains($bankName, 'dana')) {
+                        $color = '#118EEA'; // Dana Blue
+                        $icon = 'fa-wallet';
+                    } elseif (str_contains($bankName, 'gopay') || str_contains($bankName, 'ovo')) {
+                        $color = '#00A550'; // GoPay/OVO Green
+                        $icon = 'fa-wallet';
+                    } else {
+                        $color = 'var(--sky)';
+                        $icon = 'fa-building-columns';
+                    }
+                @endphp
+                <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:16px;border:1px solid var(--border);border-left:4px solid {{ $color }};display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:11px;font-weight:700;color:{{ $color }};text-transform:uppercase;letter-spacing:0.5px;">{{ $rek['bank'] ?? '-' }}</div>
+                        <i class="fas {{ $icon }}" style="color:{{ $color }};font-size:16px;"></i>
+                    </div>
+                    <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);letter-spacing:1px;">{{ $rek['norek'] ?? '-' }}</div>
+                    <div style="font-size:12px;color:var(--text-1);"><span style="color:var(--text-3);">a.n</span> {{ $rek['an'] ?? '-' }}</div>
                 </div>
-                <div class="mono" style="font-size:20px;font-weight:700;color:var(--text-1);">6280939267</div>
-                <div style="font-size:12px;color:var(--text-1);"><span style="color:var(--text-3);">a.n</span> AISYAH NURUL ISTIQOMAH</div>
-            </div>
-            <div style="background:var(--bg-elevated);border-radius:var(--radius);padding:14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div style="font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;">Bank Mandiri</div>
-                    <i class="fas fa-building-columns" style="color:var(--amber);font-size:14px;"></i>
+            @empty
+                <div style="padding:15px;color:var(--text-3);font-size:13px;border:1px dashed var(--border);border-radius:8px;text-align:center;">
+                    Belum ada informasi rekening yang ditambahkan. Silakan atur di menu Pengaturan.
                 </div>
-                <div class="mono" style="font-size:20px;font-weight:700;color:var(--text-1);">1760003390752</div>
-                <div style="font-size:12px;color:var(--text-1);"><span style="color:var(--text-3);">a.n</span> BINA RAJA SOLUSI</div>
-            </div>
+            @endforelse
+            
             <div style="background:rgba(245,158,11,0.06);border-radius:var(--radius);padding:14px;border:1px solid rgba(245,158,11,0.2);">
-                <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">
-                    <i class="fas fa-triangle-exclamation"></i> Petunjuk
+                <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600;">
+                    <i class="fas fa-triangle-exclamation"></i> Petunjuk Transfer
                 </div>
                 <div style="font-size:12px;color:var(--text-2);line-height:1.5;">
-                    Pastikan nominal transfer sesuai dengan tagihan. Sertakan nomor invoice sebagai keterangan transfer.
+                    Pastikan nominal transfer sesuai dengan tagihan. Sertakan <strong>Nomor Invoice</strong> sebagai berita/keterangan transfer untuk memudahkan verifikasi.
                 </div>
             </div>
         </div>
@@ -87,14 +115,21 @@
                            placeholder="No Invoice / Pelanggan..."
                            value="{{ request('search') }}">
                 </div>
+                @php
+                    $rekeningBanks = json_decode(\App\Models\SystemSetting::get('rekening_banks', '[]'), true);
+                @endphp
                 <select name="metode" class="form-control form-control-mono" style="width:160px;height:32px;padding:0 8px;font-size:12px;">
                     <option value="">Semua Metode</option>
-                    <option value="cash"             {{ request('metode') === 'cash'             ? 'selected' : '' }}>Cash</option>
-                    <option value="transfer_bca"     {{ request('metode') === 'transfer_bca'     ? 'selected' : '' }}>Transfer BCA</option>
-                    <option value="transfer_bri"     {{ request('metode') === 'transfer_bri'     ? 'selected' : '' }}>Transfer BRI</option>
-                    <option value="transfer_mandiri" {{ request('metode') === 'transfer_mandiri' ? 'selected' : '' }}>Transfer Mandiri</option>
-                    <option value="transfer_bni"     {{ request('metode') === 'transfer_bni'     ? 'selected' : '' }}>Transfer BNI</option>
-                    <option value="transfer_lain"    {{ request('metode') === 'transfer_lain'    ? 'selected' : '' }}>Transfer Lain</option>
+                    <option value="cash" {{ request('metode') === 'cash' ? 'selected' : '' }}>Cash</option>
+                    @foreach($rekeningBanks as $rek)
+                        @php 
+                            $bank = $rek['bank'] ?? 'Bank';
+                            $an = $rek['an'] ?? '';
+                            $val = "Transfer $bank" . ($an ? " (a.n $an)" : "");
+                        @endphp
+                        <option value="{{ $val }}" {{ request('metode') === $val ? 'selected' : '' }}>{{ $val }}</option>
+                    @endforeach
+                    <option value="Transfer Lain" {{ request('metode') === 'Transfer Lain' ? 'selected' : '' }}>Transfer Lain</option>
                 </select>
                 <button type="submit" class="btn btn-ghost btn-sm">
                     <i class="fas fa-filter"></i> Filter

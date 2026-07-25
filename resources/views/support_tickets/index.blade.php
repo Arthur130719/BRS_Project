@@ -64,9 +64,19 @@
                         @endif
                     </td>
                     <td class="text-right">
-                        <button type="button" class="btn btn-sm btn-outline" @click="modalTicket = {{ $t->id }}" title="Lihat Detail">
-                            <i class="fas fa-eye"></i> Detail
-                        </button>
+                        <div style="display: flex; justify-content: flex-end; gap: 4px;">
+                            @if($t->status === 'open')
+                            <form action="{{ route('support-tickets.create-job-order', $t->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-primary" title="Buat Job Order">
+                                    <i class="fas fa-hammer"></i> Job Order
+                                </button>
+                            </form>
+                            @endif
+                            <button type="button" class="btn btn-sm btn-outline" @click="modalTicket = {{ $t->id }}" title="Lihat Detail">
+                                <i class="fas fa-eye"></i> Detail
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 @empty
@@ -80,12 +90,13 @@
     
     @if($tickets->hasPages())
     <div style="padding:1rem; border-top:1px solid var(--border);">
-        {{ $tickets->links('pagination::tailwind') }}
+        {{ $tickets->links() }}
     </div>
     @endif
 
     <!-- Modal Detail & Update Status -->
     @foreach($tickets as $t)
+    <template x-teleport="body">
     <div x-show="modalTicket === {{ $t->id }}" class="modal-overlay" @click.self="modalTicket = null" x-cloak>
         <div class="modal">
             <div class="modal-header">
@@ -131,7 +142,7 @@
                     <div style="padding:1rem; background:rgba(0,0,0,0.1); border-radius:8px; white-space:pre-wrap;">{{ $t->deskripsi }}</div>
                 </div>
 
-                <form action="{{ route('support-tickets.status', $t->id) }}" method="POST">
+                <form id="status-form-{{ $t->id }}" action="{{ route('support-tickets.status', $t->id) }}" method="POST">
                     @csrf
                     <div class="form-group">
                         <label class="form-label">Ubah Status Aduan</label>
@@ -141,14 +152,22 @@
                             <option value="resolved" {{ $t->status === 'resolved' ? 'selected' : '' }}>Resolved (Selesai)</option>
                         </select>
                     </div>
-                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
-                        <button type="button" class="btn btn-ghost" @click="modalTicket = null">Tutup</button>
-                        <button type="submit" class="btn btn-primary">Simpan Status</button>
-                    </div>
                 </form>
+
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px; align-items: center;">
+                    @if($t->status === 'open')
+                    <form action="{{ route('support-tickets.create-job-order', $t->id) }}" method="POST" style="margin:0;">
+                        @csrf
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-hammer"></i> Buat Job Order</button>
+                    </form>
+                    @endif
+                    
+                    <button type="button" class="btn btn-ghost" @click="modalTicket = null">Tutup</button>
+                    <button type="submit" class="btn btn-ghost" form="status-form-{{ $t->id }}">Simpan Status</button>
+                </div>
             </div>
-        </div>
     </div>
+    </template>
     @endforeach
 </div>
 

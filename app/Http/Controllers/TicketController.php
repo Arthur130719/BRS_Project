@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Notifikasi;
 
 class TicketController extends Controller
 {
@@ -112,7 +113,13 @@ class TicketController extends Controller
         $validated['nomor_tiket'] = $prefix . '-' . date('ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
         $validated['status'] = 'Pending';
 
-        \App\Models\Ticket::create($validated);
+        $ticket = \App\Models\Ticket::create($validated);
+
+        Notifikasi::create([
+            'type'      => 'info',
+            'title'     => 'Job Order Baru (' . $ticket->kategori . ')',
+            'deskripsi' => 'No: ' . $ticket->nomor_tiket . ' — Pelapor: ' . ($ticket->pelanggan ? $ticket->pelanggan->nama : $ticket->nama_pelapor),
+        ]);
 
         return redirect()->route('tickets.index')->with('success', 'Tiket / Job Order berhasil dibuat.');
     }
@@ -137,6 +144,38 @@ class TicketController extends Controller
     public function update(Request $request, string $id)
     {
         $ticket = \App\Models\Ticket::findOrFail($id);
+
+        // --- Logika Anti-Race Condition (Atomic Update) ---
+        // Jika user adalah teknisi dan form mengirim teknisi_id miliknya
+        if (auth()->user()->role === 'teknisi' && $request->filled('teknisi_id') && $request->teknisi_id == auth()->id()) {
+            
+            // HANYA jalankan pengecekan rebutan JIKA tiket ini belum menjadi miliknya di database
+            // (Artinya dia sedang mencoba MENGAMBIL tiket, bukan sekadar update status)
+            if ($ticket->teknisi_id != auth()->id()) {
+                
+                // 1. Cek apakah tiket sudah terambil oleh orang lain sejak halaman di-load
+                if ($ticket->teknisi_id !== null) {
+                    $takerName = $ticket->teknisi ? $ticket->teknisi->name : 'teknisi lain';
+                    return redirect()->route('tickets.index')->with('error', "Keduluan! Job order ini baru saja diambil oleh {$takerName}.");
+                }
+
+                // 2. Jika masih kosong, coba atomic update untuk cegah bentrok di milidetik yang sama
+                $updated = \App\Models\Ticket::where('id', $id)
+                    ->whereNull('teknisi_id')
+                    ->update(['teknisi_id' => auth()->id()]);
+
+                if (!$updated) {
+                    // Atomic update gagal, berarti direbut tepat di milidetik yang sama
+                    $currentTicket = \App\Models\Ticket::with('teknisi')->find($id);
+                    $takerName = $currentTicket->teknisi ? $currentTicket->teknisi->name : 'teknisi lain';
+                    return redirect()->route('tickets.index')->with('error', "Keduluan! Job order ini baru saja diambil oleh {$takerName}.");
+                }
+                
+                // Perbarui instance model agar lolos validasi ke bawah
+                $ticket->teknisi_id = auth()->id();
+            }
+        }
+        // --- Selesai Logika Anti-Race Condition ---
 
         $validated = $request->validate([
             'kategori' => 'required|in:PSB,Gangguan,Cabut Modem,Lainnya',

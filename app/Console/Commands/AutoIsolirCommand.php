@@ -8,6 +8,7 @@ use App\Models\IsolirLog;
 use App\Models\Notifikasi;
 use App\Models\Pelanggan;
 use App\Models\SystemSetting;
+use App\Services\MikrotikService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -102,6 +103,11 @@ class AutoIsolirCommand extends Command
                 'isolir_by' => 'auto',
                 'isolir_at' => now(),
             ]);
+
+            if ($pelanggan->nas) {
+                $mikrotikService = app(MikrotikService::class);
+                $mikrotikService->changePppoeProfile($pelanggan->nas, $pelanggan->username_pppoe, 'isolir');
+            }
 
             IsolirLog::create([
                 'pelanggan_id' => $pelanggan->id,
