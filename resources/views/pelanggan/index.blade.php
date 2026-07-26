@@ -463,7 +463,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = document.querySelector('[\\@click="open = true"]');
         if (btn) btn.click();
     }
+});
+</script>
+@endpush
+@endif
 
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
     // Auto-refresh data pelanggan setiap 5 detik agar real-time
     setInterval(function() {
         // Cek apakah ada modal yang sedang terbuka (terlihat di layar)
@@ -478,7 +485,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isModalOpen) return;
 
-        fetch(window.location.href, {
+        // Tambahkan timestamp untuk mencegah browser melakukan caching
+        let url = new URL(window.location.href);
+        url.searchParams.set('_t', new Date().getTime());
+
+        fetch(url.toString(), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(res => res.text())
@@ -496,6 +507,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
-@endif
 
 @endsection
