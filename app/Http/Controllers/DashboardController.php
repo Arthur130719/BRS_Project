@@ -150,6 +150,9 @@ class DashboardController extends Controller
             $pendingPermohonanCount = \App\Models\Permohonan::where('status', 'pending')->count();
         }
 
+        $latestAduan = \App\Models\SupportTicket::latest('updated_at')->first();
+        $pendingAduanCount = \App\Models\SupportTicket::where('status', 'open')->count();
+
         return response()->json([
             'unread_count' => $unreadCount,
             'latest_notif_id' => $latestNotif ? $latestNotif->id : 0,
@@ -166,6 +169,8 @@ class DashboardController extends Controller
             'pending_ticket_count' => $pendingTicketCount,
             'latest_permohonan_time' => $latestPermohonan ? $latestPermohonan->updated_at->timestamp : 0,
             'pending_permohonan_count' => $pendingPermohonanCount,
+            'latest_aduan_time' => $latestAduan ? $latestAduan->updated_at->timestamp : 0,
+            'pending_aduan_count' => $pendingAduanCount,
         ]);
     }
 }

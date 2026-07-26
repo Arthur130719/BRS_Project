@@ -1371,11 +1371,15 @@ if ('serviceWorker' in navigator) {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   let audioCtx = new AudioContext();
 
-  document.body.addEventListener('click', function() {
+  const resumeAudioCtx = function() {
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
-  }, { once: false });
+  };
+
+  ['click', 'touchstart', 'keydown', 'mousemove', 'scroll'].forEach(evt => {
+    document.body.addEventListener(evt, resumeAudioCtx, { once: true, passive: true });
+  });
 
   window.setNotificationSound = function(type) {
     localStorage.setItem('brs_notif_sound', type);
@@ -1636,17 +1640,19 @@ if ('serviceWorker' in navigator) {
       }
 
       // ── Update Permohonan Badge & Notify ──
-      const permohonanBtn = document.querySelector('.nav-item[href*="permohonan"]');
-      let permohonanBadge = permohonanBtn ? permohonanBtn.querySelector('.nav-badge') : null;
-      if (data.pending_permohonan_count > 0) {
-        if (permohonanBadge) {
-          permohonanBadge.textContent = data.pending_permohonan_count;
-        } else if (permohonanBtn) {
-          permohonanBtn.innerHTML += `<span class="nav-badge red" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(239,68,68,0.2); color: #fca5a5; font-size: 10px; font-weight: bold;">${data.pending_permohonan_count}</span>`;
+      const permohonanLinks = document.querySelectorAll('a[href*="permohonan"]');
+      permohonanLinks.forEach(link => {
+        let badge = link.querySelector('.nav-badge');
+        if (data.pending_permohonan_count > 0) {
+          if (badge) {
+            badge.textContent = data.pending_permohonan_count;
+          } else {
+            link.innerHTML += `<span class="nav-badge red" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(239,68,68,0.2); color: #fca5a5; font-size: 10px; font-weight: bold;">${data.pending_permohonan_count}</span>`;
+          }
+        } else if (badge) {
+          badge.remove();
         }
-      } else if (permohonanBadge) {
-        permohonanBadge.remove();
-      }
+      });
 
       if (lastPermohonanTime === null) {
         lastPermohonanTime = data.latest_permohonan_time;
@@ -1657,17 +1663,19 @@ if ('serviceWorker' in navigator) {
       }
 
       // ── Update Job Order Badge ──
-      const ticketBtn = document.querySelector('.nav-item[href*="tickets"]');
-      let ticketBadge = ticketBtn ? ticketBtn.querySelector('.ticket-badge') : null;
-      if (data.pending_ticket_count > 0) {
-        if (ticketBadge) {
-          ticketBadge.textContent = data.pending_ticket_count;
-        } else if (ticketBtn) {
-          ticketBtn.innerHTML += `<span class="nav-badge orange ticket-badge" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.2); color: #fcd34d; font-size: 10px; font-weight: bold;">${data.pending_ticket_count}</span>`;
+      const ticketLinks = document.querySelectorAll('a[href*="tickets"]');
+      ticketLinks.forEach(link => {
+        let badge = link.querySelector('.nav-badge');
+        if (data.pending_ticket_count > 0) {
+          if (badge) {
+            badge.textContent = data.pending_ticket_count;
+          } else {
+            link.innerHTML += `<span class="nav-badge orange ticket-badge" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(245,158,11,0.2); color: #fcd34d; font-size: 10px; font-weight: bold;">${data.pending_ticket_count}</span>`;
+          }
+        } else if (badge) {
+          badge.remove();
         }
-      } else if (ticketBadge) {
-        ticketBadge.remove();
-      }
+      });
 
       // ── Check new Job Order (Ticket) update globally ──
       if (lastTicketTime === null) {
@@ -1676,6 +1684,30 @@ if ('serviceWorker' in navigator) {
         lastTicketTime = data.latest_ticket_time;
         showToast(`🛠️ Ada Job Order Baru / Diperbarui!`, 'warning', `<button onclick="window.location.href='/tickets'" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Lihat</button>`);
         if (isTicketsPage) setTimeout(() => window.location.reload(), 2500);
+      }
+      
+      // ── Update Aduan Pelanggan Badge ──
+      let lastAduanTime = window.lastAduanTime || null;
+      const aduanLinks = document.querySelectorAll('a[href*="support-tickets"]');
+      aduanLinks.forEach(link => {
+        let badge = link.querySelector('.nav-badge');
+        if (data.pending_aduan_count > 0) {
+          if (badge) {
+            badge.textContent = data.pending_aduan_count;
+          } else {
+            link.innerHTML += `<span class="nav-badge red" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(239,68,68,0.2); color: #fca5a5; font-size: 10px; font-weight: bold;">${data.pending_aduan_count}</span>`;
+          }
+        } else if (badge) {
+          badge.remove();
+        }
+      });
+      
+      if (window.lastAduanTime === undefined) {
+        window.lastAduanTime = data.latest_aduan_time;
+      } else if (data.latest_aduan_time > 0 && data.latest_aduan_time > window.lastAduanTime) {
+        window.lastAduanTime = data.latest_aduan_time;
+        showToast(`🎧 Ada Aduan Pelanggan Baru / Diperbarui!`, 'danger', `<button onclick="window.location.href='/support-tickets'" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Lihat</button>`);
+        if (window.location.pathname.includes('/support-tickets')) setTimeout(() => window.location.reload(), 2500);
       }
     })
     .catch(err => console.error('Live Updates Error:', err));
