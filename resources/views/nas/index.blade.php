@@ -149,6 +149,9 @@
         <p>Manajemen perangkat Network Access Server dan router jaringan</p>
     </div>
     <div class="page-header-actions">
+        <button type="button" class="btn btn-primary" @click="$dispatch('open-create-nas')">
+            <i class="fas fa-plus"></i> Tambah NAS
+        </button>
         <a href="{{ route('nas.index') }}" class="btn btn-ghost">
             <i class="fas fa-rotate-right"></i> Refresh
         </a>
@@ -456,6 +459,69 @@
     </div>
     </div>
 </template>
+</div>
+
+{{-- Create NAS Modal --}}
+<div x-data="{ createOpen: false }" @open-create-nas.window="createOpen = true">
+    <template x-teleport="body">
+        <div x-show="createOpen" class="modal-overlay" @click.self="createOpen=false" x-cloak>
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-plus" style="color:var(--indigo);margin-right:8px;"></i>Tambah NAS Baru</div>
+                <button type="button" class="modal-close" @click="createOpen=false"><i class="fas fa-times"></i></button>
+            </div>
+            <form action="{{ route('nas.store') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Kode NAS <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="kode" class="form-control form-control-mono" required placeholder="NAS-001">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nama <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="nama" class="form-control" required placeholder="Router Pusat">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">IP Address <span style="color:var(--red);">*</span></label>
+                            <input type="text" name="ip_address" class="form-control form-control-mono" required placeholder="192.168.1.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Model</label>
+                            <input type="text" name="model" class="form-control" placeholder="Mikrotik RB1100">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">API Username</label>
+                            <input type="text" name="api_user" class="form-control" placeholder="Misal: admin">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">API Password</label>
+                            <input type="password" name="api_password" class="form-control" placeholder="Kosongkan jika tidak ada">
+                        </div>
+                        <div class="form-group" style="max-width: 120px;">
+                            <label class="form-label">API Port</label>
+                            <input type="number" name="api_port" class="form-control form-control-mono" placeholder="8728" value="8728">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lokasi / Deskripsi</label>
+                        <textarea name="lokasi" class="form-control" rows="2" placeholder="Keterangan atau lokasi perangkat..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" class="btn btn-ghost" @click="createOpen=false">Batal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Simpan NAS
+                    </button>
+                </div>
+            </form>
+        </div>
+        </div>
+    </template>
 </div>
 
 <script>
