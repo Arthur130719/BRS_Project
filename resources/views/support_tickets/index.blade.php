@@ -21,12 +21,12 @@
 </div>
 
 <div style="margin-bottom: 1.5rem; display: flex; justify-content: flex-end;">
-    <form method="GET" action="{{ route('support-tickets.index') }}" style="display: flex; gap: 8px; width: 100%; max-width: 400px;">
+    <form id="searchForm" method="GET" action="{{ route('support-tickets.index') }}" style="display: flex; gap: 8px; width: 100%; max-width: 400px;">
         @if(request('filter'))
             <input type="hidden" name="filter" value="{{ request('filter') }}">
         @endif
-        <input type="text" name="search" class="form-control" placeholder="Cari nama pelanggan atau #ID aduan..." value="{{ request('search') }}" style="border-radius: 8px; flex: 1; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; font-size: 14px;">
-        <button type="submit" class="btn btn-primary" style="border-radius: 8px; padding: 10px 20px;">
+        <input type="text" id="searchInput" name="search" class="form-control" placeholder="Ketik untuk mencari otomatis..." value="{{ request('search') }}" style="border-radius: 8px; flex: 1; padding: 10px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; font-size: 14px;" autocomplete="off">
+        <button type="button" onclick="doLiveSearch()" class="btn btn-primary" style="border-radius: 8px; padding: 10px 20px;">
             <i class="fas fa-search"></i>
         </button>
     </form>
@@ -234,4 +234,78 @@
     @endforeach
 </div>
 
+<script>
+    let currentUrl = window.location.href;
+    
+    // Fungsi utama untuk merefresh isi data (.card) secara dinamis
+    function refreshTable(targetUrl = currentUrl) {
+        fetch(targetUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'text/html'
+            },
+            cache: 'no-store'
+        })
+        .then(res => res.text())
+        .then(html => {
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(html, 'text/html');
+            
+            let newCard = doc.querySelector('.card');
+            let currentCard = document.querySelector('.card');
+            
+            // Ganti keseluruhan container .card agar semua modal template yang baru juga ikut ter-load
+            if (newCard && currentCard) {
+                // Hapus script/tag yang tidak perlu di clone kalau ada
+                currentCard.outerHTML = newCard.outerHTML;
+            }
+        })
+        .catch(err => console.error('Error refreshing table:', err));
+    }
+
+    // Fungsi Trigger Pencarian
+    function doLiveSearch() {
+        let searchForm = document.getElementById('searchForm');
+        let url = new URL(searchForm.action);
+        let formData = new FormData(searchForm);
+        for(let [k,v] of formData.entries()) {
+            if (v) url.searchParams.set(k, v);
+        }
+        currentUrl = url.toString();
+        window.history.pushState({}, '', currentUrl);
+        refreshTable(currentUrl);
+    }
+
+    let searchInput = document.getElementById('searchInput');
+    let searchForm = document.getElementById('searchForm');
+    let searchTimeout = null;
+
+    if (searchInput && searchForm) {
+        // Blokir Enter standar agar tidak reload halaman
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            doLiveSearch();
+        });
+
+        // Deteksi setiap ketikan (Live Search)
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                doLiveSearch();
+            }, 300); // Tunggu 300ms setelah selesai ngetik sebelum memicu pencarian
+        });
+    }
+
+    // Polling setiap 3 detik untuk real-time update
+    setInterval(() => {
+        let isModalOpen = document.querySelector('.modal-overlay:not([style*="display: none"])');
+        let hasSelectedIds = document.querySelector('input[type="checkbox"]:checked');
+        let isSearching = document.activeElement && document.activeElement.id === 'searchInput';
+        
+        // Pengaman: Jangan refresh jika admin sedang baca modal, centang arsip, atau ngetik di search box
+        if (!isModalOpen && !hasSelectedIds && !isSearching) {
+            refreshTable(currentUrl);
+        }
+    }, 3000);
+</script>
 @endsection

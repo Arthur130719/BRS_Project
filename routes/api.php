@@ -104,7 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 'latitude' => $pelanggan->latitude,
                 'longitude' => $pelanggan->longitude,
                 'ip_address' => $pelanggan->ip_address,
-                'avatar' => $pelanggan->avatar ? asset('storage/' . $pelanggan->avatar) : null,
+                'avatar' => $pelanggan->avatar && str_starts_with($pelanggan->avatar, 'http') ? $pelanggan->avatar : ($pelanggan->avatar ? asset('storage/' . $pelanggan->avatar) : null),
                 'banner' => $pelanggan->banner ? asset('storage/' . $pelanggan->banner) : null,
             ],
             'paket' => $pelanggan->paket ? [
@@ -127,7 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
         $validated = $request->validate([
             'phone' => 'nullable|string|max:50',
             'phone_2' => 'nullable|string|max:50',
-            'avatar' => 'nullable|image|max:2048',
+            'avatar' => 'nullable|string|max:255',
             'banner' => 'nullable|image|max:4096',
         ]);
 
@@ -138,11 +138,9 @@ Route::middleware('auth:sanctum')->group(function () {
             $pelanggan->phone_2 = $validated['phone_2'];
         }
 
-        if ($request->hasFile('avatar')) {
-            if ($pelanggan->avatar) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($pelanggan->avatar);
-            }
-            $pelanggan->avatar = $request->file('avatar')->store('avatars', 'public');
+        if ($request->has('avatar')) {
+            // Bisa menerima string (URL preset avatar)
+            $pelanggan->avatar = $validated['avatar'];
         }
 
         if ($request->hasFile('banner')) {
@@ -160,7 +158,7 @@ Route::middleware('auth:sanctum')->group(function () {
             'pelanggan' => [
                 'phone' => $pelanggan->phone,
                 'phone_2' => $pelanggan->phone_2,
-                'avatar' => $pelanggan->avatar ? asset('storage/' . $pelanggan->avatar) : null,
+                'avatar' => $pelanggan->avatar && str_starts_with($pelanggan->avatar, 'http') ? $pelanggan->avatar : ($pelanggan->avatar ? asset('storage/' . $pelanggan->avatar) : null),
                 'banner' => $pelanggan->banner ? asset('storage/' . $pelanggan->banner) : null,
             ]
         ]);
