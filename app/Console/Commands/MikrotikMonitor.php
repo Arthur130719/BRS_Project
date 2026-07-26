@@ -35,19 +35,42 @@ class MikrotikMonitor extends Command
             return;
         }
 
-        $nas = $nasList->first(); // Mengambil router utama (bisa dimodifikasi jika multi-router)
-        $this->info("Menghubungkan ke MikroTik {$nas->nama} ({$nas->ip_address})...");
+        $apis = [];
+        foreach ($nasList as $nas) {
+            $this->info("Menghubungkan ke MikroTik {$nas->nama} ({$nas->ip_address})...");
+            $api = new RouterosAPI();
+            $api->timeout = 3; // Set timeout lebih pendek agar tidak macet lama
+            if ($api->connect($nas->ip_address, $nas->api_user, $nas->api_password, $nas->api_port ?: 8728)) {
+                $apis[] = ['nas' => $nas, 'api' => $api];
+                $this->info(" -> Berhasil terhubung ke {$nas->nama}!");
+            } else {
+                $this->error(" -> Gagal terhubung ke {$nas->nama}!");
+            }
+        }
 
-        $api = new RouterosAPI();
+        if (empty($apis)) {
+            $this->error("Gagal terhubung ke semua router MikroTik.");
+            return;
+        }
         
-        if ($api->connect($nas->ip_address, $nas->api_user, $nas->api_password, $nas->api_port ?: 8728)) {
-            $this->info("Berhasil terhubung! Memulai pemantauan live data (Tekan Ctrl+C untuk berhenti)...");
+        $this->info("Memulai pemantauan live data multi-router (Tekan Ctrl+C untuk berhenti)...");
             
-            while (true) {
+        while (true) {
+            $allSessions = [];
+            
+            foreach ($apis as $index => $item) {
+                $nas = $item['nas'];
+                $api = $item['api'];
+                
                 try {
                     // 1. Ambil data Active Sessions
                     $api->write('/ppp/active/print');
                     $activePpp = $api->read();
+                    
+                    // Jika read() mengembalikan false atau error string (koneksi putus), lewati
+                    if (!is_array($activePpp)) {
+                        continue;
+                    }
                     
                     // 2. Ambil data Simple Queues (dynamic) untuk traffic
                     $api->write('/queue/simple/print', false);
@@ -61,7 +84,6 @@ class MikrotikMonitor extends Command
                         }
                     }
                     
-                    $sessions = [];
                     if (is_array($activePpp)) {
                         foreach ($activePpp as $session) {
                             $ifaceName = "<pppoe-" . ($session['name'] ?? '') . ">";
@@ -82,26 +104,23 @@ class MikrotikMonitor extends Command
                             $session['nas_id'] = $nas->id;
                             $session['nas_name'] = $nas->nama;
                             
-                            $sessions[] = $session;
+                            $allSessions[] = $session;
                         }
                     }
                     
-                    // Simpan data array ke Cache selama 10 detik
-                    // Cache ini yang akan dibaca oleh RadiusController
-                    Cache::put('mikrotik_live_sessions', $sessions, 10);
-
-                    // Beri jeda 1 detik sebelum tarik data lagi agar CPU MikroTik tetap aman
-                    sleep(1);
-                    
                 } catch (\Exception $e) {
-                    $this->error("Koneksi terputus atau terjadi error: " . $e->getMessage());
-                    Log::error("MikrotikMonitor Daemon Error: " . $e->getMessage());
-                    sleep(5); // Tunggu sebentar lalu coba lagi
-                    break;
+                    $this->error("Koneksi terputus ke {$nas->nama}: " . $e->getMessage());
+                    Log::error("MikrotikMonitor Daemon Error ({$nas->nama}): " . $e->getMessage());
+                    // Kita bisa hapus router ini dari daftar jika error agar tidak memperlambat loop
+                    // Tapi sementara kita biarkan untuk percobaan koneksi berikutnya
                 }
             }
-        } else {
-            $this->error("Gagal terhubung ke API MikroTik.");
+            
+            // Simpan data gabungan semua router ke Cache selama 10 detik
+            Cache::put('mikrotik_live_sessions', $allSessions, 10);
+
+            // Beri jeda 1 detik sebelum tarik data lagi
+            sleep(1);
         }
     }
 }
