@@ -38,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/company', 'company.profile')->name('company.profile');
 
     // ── Pelanggan (Admin: full CRUD | Kasir: full CRUD | Teknisi: read)
+    Route::post('/pelanggan/import-rsc', [PelangganController::class, 'importRsc'])->name('pelanggan.importRsc');
     Route::resource('pelanggan', PelangganController::class);
     Route::post('/pelanggan/{id}/suspend', [PelangganController::class, 'suspend'])->name('pelanggan.suspend');
     Route::post('/pelanggan/{id}/aktifkan', [PelangganController::class, 'aktifkan'])->name('pelanggan.aktifkan');

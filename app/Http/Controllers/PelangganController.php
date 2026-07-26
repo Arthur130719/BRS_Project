@@ -349,4 +349,81 @@ class PelangganController extends Controller
         $bps /= pow(1000, $pow);
         return round($bps, $precision) . ' ' . $units[$pow];
     }
+
+    public function importRsc(Request $request)
+    {
+        $request->validate([
+            'nas_id' => 'required|exists:nas,id',
+            'rsc_file' => 'required|file|mimes:txt,rsc|max:2048',
+        ]);
+
+        $file = $request->file('rsc_file');
+        $content = file_get_contents($file->getRealPath());
+
+        // Normalize line continuations (backslash followed by newline)
+        $content = preg_replace('/\\\\\r?\n\s*/', '', $content);
+        $lines = explode("\n", $content);
+
+        // Map existing paket (lowercase for matching)
+        $pakets = \App\Models\Paket::all()->keyBy(function ($paket) {
+            return strtolower($paket->mikrotik_profile ?: $paket->nama);
+        });
+
+        // Get existing usernames to avoid duplicates
+        $existingUsernames = \App\Models\Pelanggan::pluck('username_pppoe')->map(function ($u) {
+            return strtolower($u);
+        })->toArray();
+
+        $imported = 0;
+        $skipped = 0;
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            
+            // Look for PPP Secret add commands
+            if (strpos($line, 'add ') === 0 && strpos($line, 'service=pppoe') !== false) {
+                $name = null;
+                $password = null;
+                $profile = null;
+
+                if (preg_match('/name="?([^"\s]+)"?/', $line, $matches)) {
+                    $name = $matches[1];
+                }
+                if (preg_match('/password="?([^"\s]+)"?/', $line, $matches)) {
+                    $password = $matches[1];
+                }
+                if (preg_match('/profile="?([^"\s]+)"?/', $line, $matches)) {
+                    $profile = $matches[1];
+                }
+
+                if ($name && $password) {
+                    if (in_array(strtolower($name), $existingUsernames)) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Find paket id
+                    $paket_id = null;
+                    if ($profile && isset($pakets[strtolower($profile)])) {
+                        $paket_id = $pakets[strtolower($profile)]->id;
+                    }
+
+                    \App\Models\Pelanggan::create([
+                        'username_pppoe' => $name,
+                        'password_pppoe' => $password,
+                        'nama'           => ucwords(str_replace(['.', '_', '-'], ' ', $name)),
+                        'nas_id'         => $request->nas_id,
+                        'paket_id'       => $paket_id,
+                        'status'         => 'active',
+                        'tgl_aktif'      => now(),
+                    ]);
+
+                    $existingUsernames[] = strtolower($name);
+                    $imported++;
+                }
+            }
+        }
+
+        return back()->with('success', "Berhasil import {$imported} rahasia PPPoE. ({$skipped} dilewati karena username ganda).");
+    }
 }

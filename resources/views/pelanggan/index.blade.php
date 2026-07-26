@@ -15,7 +15,53 @@
     </div>
     <div class="page-header-actions">
         @if(auth()->user()->hasRole(['admin', 'kasir']))
-        <div x-data="{ open: false }">
+        <div x-data="{ openImport: false }" style="display:inline-block; margin-right: 8px;">
+            <button @click="openImport = true" class="btn btn-ghost">
+                <i class="fas fa-file-import"></i> Import .rsc
+            </button>
+            <template x-teleport="body">
+                <div x-show="openImport" class="modal-overlay" @click.self="openImport = false" style="display:none;" x-cloak>
+                    <div class="modal" @click.stop>
+                        <div class="modal-header">
+                            <span class="modal-title"><i class="fas fa-file-import" style="color:var(--indigo);margin-right:8px;"></i>Import Data .rsc Mikrotik</span>
+                            <button class="modal-close" @click="openImport = false"><i class="fas fa-xmark"></i></button>
+                        </div>
+                        <form method="POST" action="{{ route('pelanggan.importRsc') }}" enctype="multipart/form-data">
+                            @csrf
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label class="form-label">Router NAS <span style="color:var(--red)">*</span></label>
+                                    <select name="nas_id" class="form-control" required>
+                                        <option value="">-- Pilih Router --</option>
+                                        @foreach(\App\Models\Nas::all() as $nas)
+                                            <option value="{{ $nas->id }}">{{ $nas->nama }} ({{ $nas->ip_address }})</option>
+                                        @endforeach
+                                    </select>
+                                    <small style="color:var(--text-4); display:block; margin-top:4px;">Pilih Router tempat pelanggan-pelanggan ini berada.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">File .rsc Backup <span style="color:var(--red)">*</span></label>
+                                    <input type="file" name="rsc_file" class="form-control" accept=".rsc,.txt" required>
+                                    <small style="color:var(--text-4); display:block; margin-top:4px;">Upload file <code>.rsc</code> dari hasil export Mikrotik.</small>
+                                </div>
+                                <div style="padding:12px; background:var(--sky-dim); color:var(--sky); border:1px solid rgba(14,165,233,0.2); border-radius:6px; font-size:12px;">
+                                    <i class="fas fa-info-circle" style="margin-right:4px;"></i>
+                                    <strong>Tips:</strong> Sistem hanya akan mengimport profil yang formatnya <code>add name="..." password="..."</code>.
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+                                <button type="button" class="btn btn-ghost" @click="openImport = false">Batal</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-upload"></i> Proses Import
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div x-data="{ open: false }" style="display:inline-block">
             <button @click="open = true" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Tambah Pelanggan
             </button>
