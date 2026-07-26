@@ -694,6 +694,7 @@ select.form-control option { background: var(--bg-surface); }
 .modal-close:hover { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
 .modal-body { padding: 24px; overflow-y: auto; flex: 1; min-height: 0; }
 .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; background: rgba(0,0,0,0.1); border-radius: 0 0 var(--radius-xl) var(--radius-xl); flex-shrink: 0;}
+.modal > form { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
 /* ── Alert / Toast ── */
 .alert { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: var(--radius); border: 1px solid; font-size: 13px; margin-bottom: 16px; }
