@@ -376,9 +376,9 @@ function LandingPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-secondary/40 backdrop-blur-sm" onClick={closeModal}></div>
-          <div className="bg-surface relative z-10 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 animate-in fade-in zoom-in duration-200">
+          <div className="bg-surface relative z-10 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
             {/* Modal Header */}
-            <div className="bg-surface-container-low px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
+            <div className="bg-surface-container-low px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center shrink-0">
               <h3 className="font-headline-md text-secondary">Pendaftaran Layanan</h3>
               <button onClick={closeModal} className="text-on-surface-variant hover:text-error transition-colors">
                 <span className="material-symbols-outlined">close</span>
@@ -386,7 +386,7 @@ function LandingPage() {
             </div>
             
             {/* Modal Body */}
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1 min-h-0">
               {submitSuccess ? (
                 <div className="text-center py-6">
                   <div className="w-16 h-16 rounded-full bg-[#ecfdf5] text-[#10b981] flex items-center justify-center mx-auto mb-4">
