@@ -456,16 +456,38 @@
 <script>
 document.addEventListener('alpine:init', () => {
     // Open the modal automatically if there are validation errors
-    // This relies on Alpine having initialized the x-data component
 });
-// Simpler approach: dispatch event on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
     const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
     if (hasErrors) {
-        // Find the Alpine component and set open = true
         const btn = document.querySelector('[\\@click="open = true"]');
         if (btn) btn.click();
     }
+
+    // Auto-refresh data pelanggan setiap 5 detik agar real-time
+    setInterval(function() {
+        // Jangan auto-refresh jika ada modal isolir/hapus yang sedang ditekan
+        // Atau jika mouse sedang berada di dalam area tabel (mencegah klik meleset)
+        let isHoveringTable = document.querySelector('.table-wrap:hover');
+        let isModalOpen = document.querySelector('.modal-overlay:not([style*="display: none"])');
+        
+        if (isHoveringTable || isModalOpen) return;
+
+        fetch(window.location.href, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTbody = doc.querySelector('.table-wrap tbody');
+            const oldTbody = document.querySelector('.table-wrap tbody');
+            if (newTbody && oldTbody) {
+                oldTbody.innerHTML = newTbody.innerHTML;
+            }
+        })
+        .catch(err => console.error('Gagal update tabel:', err));
+    }, 5000);
 });
 </script>
 @endpush
