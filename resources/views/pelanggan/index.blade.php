@@ -466,12 +466,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Auto-refresh data pelanggan setiap 5 detik agar real-time
     setInterval(function() {
-        // Jangan auto-refresh jika ada modal isolir/hapus yang sedang ditekan
-        // Atau jika mouse sedang berada di dalam area tabel (mencegah klik meleset)
-        let isHoveringTable = document.querySelector('.table-wrap:hover');
-        let isModalOpen = document.querySelector('.modal-overlay:not([style*="display: none"])');
+        // Cek apakah ada modal yang sedang terbuka (terlihat di layar)
+        let modals = document.querySelectorAll('.modal-overlay');
+        let isModalOpen = false;
+        for(let i = 0; i < modals.length; i++) {
+            if (modals[i].style.display !== 'none' && modals[i].style.display !== '') {
+                isModalOpen = true;
+                break;
+            }
+        }
         
-        if (isHoveringTable || isModalOpen) return;
+        if (isModalOpen) return;
 
         fetch(window.location.href, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
