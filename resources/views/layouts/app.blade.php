@@ -688,12 +688,12 @@ select.form-control option { background: var(--bg-surface); }
 .modal-overlay { position: fixed; inset: 0; z-index: 600; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; padding: 20px; }
 .modal { background: var(--bg-surface); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-xl); width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
 .modal-lg { max-width: 680px; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.1); border-radius: var(--radius-xl) var(--radius-xl) 0 0;}
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.1); border-radius: var(--radius-xl) var(--radius-xl) 0 0; flex-shrink: 0;}
 .modal-title { font-size: 16px; font-weight: 600; color: var(--text-1); }
 .modal-close { width: 30px; height: 30px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.05); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-3); transition: all var(--transition); font-size: 14px; }
 .modal-close:hover { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
-.modal-body { padding: 24px; overflow-y: auto; }
-.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; background: rgba(0,0,0,0.1); border-radius: 0 0 var(--radius-xl) var(--radius-xl);}
+.modal-body { padding: 24px; overflow-y: auto; flex: 1; min-height: 0; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; background: rgba(0,0,0,0.1); border-radius: 0 0 var(--radius-xl) var(--radius-xl); flex-shrink: 0;}
 
 /* ── Alert / Toast ── */
 .alert { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: var(--radius); border: 1px solid; font-size: 13px; margin-bottom: 16px; }
