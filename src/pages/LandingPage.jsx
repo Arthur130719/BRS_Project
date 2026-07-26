@@ -202,7 +202,7 @@ function LandingPage() {
                     <div key={pkg.id || index} className="bg-surface rounded-xl p-8 ambient-shadow border-x border-b border-outline-variant/30 trust-header flex flex-col relative transform md:-translate-y-4 shadow-lg">
                       <div className="absolute top-0 right-0 bg-primary-container text-on-primary font-label-sm text-label-sm px-3 py-1 rounded-bl-lg rounded-tr-lg font-bold">TERPOPULER</div>
                       <h3 className="font-headline-md text-headline-md text-secondary mb-2 mt-2">{pkg.nama}</h3>
-                      <p className="font-body-md text-body-md text-on-surface-variant mb-6 pb-6 border-b border-outline-variant/20">Optimal untuk kebutuhan produktivitas.</p>
+                      <p className="font-body-md text-body-md text-on-surface-variant mb-6 pb-6 border-b border-outline-variant/20">Solusi internet ultra-cepat untuk produktivitas tanpa batas.</p>
                       
                       <div className="mb-4">
                         <span className="font-headline-xl text-headline-xl text-secondary">{pkg.kecepatan_down}</span>
@@ -216,15 +216,11 @@ function LandingPage() {
                       <ul className="flex flex-col gap-4 mb-8 flex-grow">
                         <li className="flex items-center gap-3">
                           <span className="material-symbols-outlined text-primary-container text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                          <span className="font-body-md text-body-md">Symmetric Upload/Download</span>
+                          <span className="font-body-md text-body-md">Kecepatan Upload & Download Simetris</span>
                         </li>
                         <li className="flex items-center gap-3">
                           <span className="material-symbols-outlined text-primary-container text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                          <span className="font-body-md text-body-md">IP Private Berkinerja Tinggi</span>
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-primary-container text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                          <span className="font-body-md text-body-md">Prioritas Support 24/7</span>
+                          <span className="font-body-md text-body-md">Koneksi Stabil Berkinerja Tinggi</span>
                         </li>
                       </ul>
                       <button onClick={() => openModal(pkg)} className="w-full bg-primary-container text-on-primary font-label-md text-label-md font-bold py-3 rounded-full hover:bg-surface-tint transition-colors shadow-md">Pilih Paket</button>
@@ -235,7 +231,7 @@ function LandingPage() {
                 return (
                   <div key={pkg.id || index} className="bg-surface rounded-xl p-8 ambient-shadow border border-outline-variant/30 flex flex-col relative">
                     <h3 className="font-headline-md text-headline-md text-secondary mb-2">{pkg.nama}</h3>
-                    <p className="font-body-md text-body-md text-on-surface-variant mb-6 pb-6 border-b border-outline-variant/20">Sempurna untuk penggunaan harian.</p>
+                    <p className="font-body-md text-body-md text-on-surface-variant mb-6 pb-6 border-b border-outline-variant/20">Koneksi andal untuk hiburan keluarga dan harian Anda.</p>
                     
                     <div className="mb-4">
                       <span className="font-headline-xl text-headline-xl text-secondary">{pkg.kecepatan_down}</span>
@@ -249,11 +245,11 @@ function LandingPage() {
                     <ul className="flex flex-col gap-4 mb-8 flex-grow">
                       <li className="flex items-center gap-3">
                         <span className="material-symbols-outlined text-primary-container text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                        <span className="font-body-md text-body-md">Unlimited Quota & Tanpa FUP</span>
+                        <span className="font-body-md text-body-md">Kuota Bebas (Unlimited) Tanpa Batas FUP</span>
                       </li>
                       <li className="flex items-center gap-3">
                         <span className="material-symbols-outlined text-primary-container text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                        <span className="font-body-md text-body-md">Free Modem Rental</span>
+                        <span className="font-body-md text-body-md">Gratis Peminjaman Perangkat Modem WiFi</span>
                       </li>
                     </ul>
                     <button onClick={() => openModal(pkg)} className="w-full bg-transparent border-2 border-secondary text-secondary font-label-md text-label-md font-bold py-3 rounded-full hover:bg-secondary hover:text-on-secondary transition-colors">Pilih Paket</button>

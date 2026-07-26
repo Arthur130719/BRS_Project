@@ -13,6 +13,60 @@ export default function Profile() {
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [editPhone1, setEditPhone1] = useState('');
   const [editPhone2, setEditPhone2] = useState('');
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const promoSlides = [
+    {
+      image: '/promo1.jpg',
+      title: 'Upgrade Kecepatan Tanpa Batas',
+      subtitle: 'Rasakan streaming 4K & gaming lebih lancar tanpa lag dengan kecepatan ekstra.',
+    },
+    {
+      image: '/promo2.jpg',
+      title: 'Hiburan Keluarga Nomor Satu',
+      subtitle: 'Tetap setia bersama BRS! Kualitas koneksi terbaik yang bikin keluarga betah di rumah.',
+    },
+    {
+      image: '/promo3.jpg',
+      title: 'Layanan Eksklusif Prioritas',
+      subtitle: 'Nikmati koneksi super stabil 24/7 dan pelayanan ekstra VIP khusus pelanggan setia.',
+    }
+  ];
+
+  const handleNextSlide = () => setCurrentSlide((prev) => (prev + 1) % promoSlides.length);
+  const handlePrevSlide = () => setCurrentSlide((prev) => (prev - 1 + promoSlides.length) % promoSlides.length);
+
+  const handleTouchStart = (e) => setTouchStart(e.targetTouches[0].clientX);
+  const handleTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 50) handleNextSlide();
+    if (distance < -50) handlePrevSlide();
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
+  useEffect(() => {
+    if (isHovered) return;
+    const timer = setInterval(() => {
+      handleNextSlide();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isHovered, promoSlides.length]);
+
+  const presetAvatars = [
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Aneka&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Jude&backgroundColor=c0aede',
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Avery&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Ryker&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/9.x/avataaars/svg?seed=Destiny&backgroundColor=b6e3f4',
+  ];
 
   const fetchProfile = () => {
     const token = sessionStorage.getItem('brs_token');
@@ -94,6 +148,40 @@ export default function Profile() {
     });
   };
 
+  const handleUpdateAvatar = (avatarUrl) => {
+    setShowAvatarModal(false);
+    setIsUpdating(true);
+    const token = sessionStorage.getItem('brs_token');
+    
+    // We send it via POST form data or JSON. Since the original route expects form-data for files, 
+    // but we changed it to accept string. Form data with string is fine.
+    const formData = new FormData();
+    formData.append('avatar', avatarUrl);
+    
+    fetch(`http://${window.location.hostname}:8000/api/pelanggan/profile/update`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        fetchProfile();
+      } else {
+        alert('Gagal mengubah foto profil.');
+      }
+      setIsUpdating(false);
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Terjadi kesalahan saat mengubah foto profil.');
+      setIsUpdating(false);
+    });
+  };
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -163,15 +251,112 @@ export default function Profile() {
         <p className="font-body-md text-on-surface-variant">Manage your account information and preferences.</p>
       </header>
 
-      <div className="glass-panel rounded-2xl overflow-hidden border border-outline-variant/30 shadow-sm relative">
+      <div className="glass-panel rounded-2xl overflow-hidden border border-outline-variant/30 shadow-sm relative group">
+        <style>{`
+          .slide-transition {
+            transition: opacity 1s ease-in-out;
+          }
+          .slide-zoom {
+            animation: slowZoom 8s ease-in-out infinite alternate;
+          }
+          @keyframes slowZoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.15); }
+          }
+          .avatar-hover {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          }
+          .avatar-hover:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+            border-color: #f59e0b;
+          }
+        `}</style>
+        
+        {/* Banner Container dengan Slider */}
         <div 
-          className="h-40 relative"
-          style={{ backgroundImage: `url(https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80)`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+          className="h-44 md:h-48 relative overflow-hidden bg-[#0f172a]"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
-          <div className="absolute inset-0 bg-black/20"></div>
-          <div className="absolute -bottom-12 left-8 w-24 h-24 bg-surface rounded-full p-1 flex items-center justify-center shadow-lg border border-outline-variant/20 z-10">
-            <div className="w-full h-full bg-surface-container-highest text-secondary rounded-full flex items-center justify-center text-4xl font-bold font-headline-lg uppercase">
-              {profile?.nama?.charAt(0) || 'U'}
+          {promoSlides.map((slide, idx) => (
+            <div 
+              key={idx}
+              className={`absolute inset-0 slide-transition ${idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
+            >
+              {/* Gambar Latar */}
+              <div 
+                className={`absolute inset-0 bg-cover bg-center slide-zoom ${idx === currentSlide ? 'animate-play' : 'animate-pause'}`} 
+                style={{ backgroundImage: `url(${slide.image})` }}
+              ></div>
+              
+              {/* Overlay Hitam/Gradien untuk Teks */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent opacity-90"></div>
+
+              {/* Konten Teks Promosi */}
+              <div className="absolute inset-0 p-6 md:p-8 pl-36 md:pl-44 flex flex-col justify-center items-start w-full md:w-5/6 pointer-events-none">
+                <h3 className="text-white font-headline-sm font-bold leading-tight mb-1 drop-shadow-md">
+                  {slide.title}
+                </h3>
+                <p className="text-white/80 font-body-sm text-xs md:text-sm drop-shadow line-clamp-2 max-w-[90%]">
+                  {slide.subtitle}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {/* Tombol Navigasi Kiri (Hanya muncul saat hover di PC) */}
+          <button 
+            onClick={handlePrevSlide}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-sm transition-all opacity-0 md:group-hover:opacity-100"
+          >
+            <span className="material-symbols-outlined text-lg">chevron_left</span>
+          </button>
+          
+          {/* Tombol Navigasi Kanan (Hanya muncul saat hover di PC) */}
+          <button 
+            onClick={handleNextSlide}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-sm transition-all opacity-0 md:group-hover:opacity-100"
+          >
+            <span className="material-symbols-outlined text-lg">chevron_right</span>
+          </button>
+
+          {/* Indikator Titik (Dots) */}
+          <div className="absolute bottom-4 right-4 md:top-4 md:bottom-auto z-20 flex gap-1.5 pointer-events-auto">
+            {promoSlides.map((_, idx) => (
+              <button 
+                key={idx} 
+                onClick={() => setCurrentSlide(idx)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentSlide ? 'bg-primary w-5' : 'bg-white/30 hover:bg-white/50'}`}
+              ></button>
+            ))}
+          </div>
+        </div>
+
+        {/* Wadah Avatar Ditempatkan di Luar overflow-hidden Banner (Absolute ke glass-panel) */}
+        <div className="absolute top-32 left-8 z-20 group-hover:-translate-y-2 transition-transform duration-500">
+          <div className="relative w-24 h-24">
+            {/* Avatar Utama */}
+            <div 
+              onClick={() => setShowAvatarModal(true)}
+              className="absolute inset-0 bg-surface rounded-full p-1 flex items-center justify-center shadow-lg border-2 border-outline-variant/30 avatar-hover cursor-pointer z-10 overflow-hidden"
+              title="Klik untuk mengubah foto profil"
+            >
+              <div className="w-full h-full bg-gradient-to-br from-surface-container-highest to-surface-container-lowest text-primary rounded-full flex items-center justify-center text-4xl font-bold font-headline-lg uppercase shadow-inner overflow-hidden">
+                {profile?.avatar ? (
+                  <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  profile?.nama?.charAt(0) || 'U'
+                )}
+              </div>
+            </div>
+            {/* Indikator Edit (Opsional, kecil di pojok) */}
+            <div className="absolute bottom-0 right-0 bg-primary text-on-primary w-6 h-6 rounded-full flex items-center justify-center shadow-md z-20 pointer-events-none border-2 border-surface">
+              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>edit</span>
             </div>
           </div>
         </div>
@@ -333,13 +518,50 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="p-8 bg-surface-container-lowest border-t border-outline-variant/30">
-          <p className="font-body-sm text-on-surface-variant flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm">lock</span>
+        <div className="p-8 bg-surface-container-lowest border-t border-outline-variant/30 flex flex-col gap-3">
+          <p className="font-body-sm text-on-surface-variant flex items-start gap-2">
+            <span className="material-symbols-outlined text-sm mt-0.5">lock</span>
             Untuk mengubah informasi sensitif seperti password PPPoE, silakan hubungi tim Support kami.
+          </p>
+          <p className="font-body-sm text-on-surface-variant flex items-start gap-2">
+            <span className="material-symbols-outlined text-sm mt-0.5">my_location</span>
+            Pastikan letak rumah Anda sudah sesuai dengan klik "Perbarui Titik Lokasi" pada kolom Titik Koordinat.
+          </p>
+          <p className="font-body-sm text-on-surface-variant flex items-start gap-2">
+            <span className="material-symbols-outlined text-sm mt-0.5">home_pin</span>
+            Jika ingin menambah detail isi atau pindah rumah pada kolom Alamat Pemasangan, silakan hubungi Admin / Support.
           </p>
         </div>
       </div>
+
+      {/* Modal Pilih Avatar */}
+      {showAvatarModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-surface w-full max-w-md rounded-2xl shadow-xl border border-outline-variant/30 overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
+              <h3 className="font-headline-sm font-bold text-secondary">Pilih Foto Profil</h3>
+              <button onClick={() => setShowAvatarModal(false)} className="text-on-surface-variant hover:text-error transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 grid grid-cols-3 gap-4">
+              {presetAvatars.map((url, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => handleUpdateAvatar(url)}
+                  className="cursor-pointer group relative rounded-full overflow-hidden border-2 border-transparent hover:border-primary transition-all p-1"
+                >
+                  <img src={url} alt={`Avatar ${idx+1}`} className="w-full h-auto rounded-full group-hover:scale-105 transition-transform" />
+                </div>
+              ))}
+            </div>
+            <div className="px-6 py-4 bg-surface-container-lowest border-t border-outline-variant/30">
+              <p className="text-xs text-on-surface-variant text-center">Silakan klik salah satu avatar di atas untuk langsung mengganti foto profil Anda.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

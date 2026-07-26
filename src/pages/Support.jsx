@@ -52,6 +52,10 @@ export default function Support() {
 
   useEffect(() => {
     fetchTickets();
+    const interval = setInterval(() => {
+      fetchTickets();
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   // Polling for real-time chat updates
