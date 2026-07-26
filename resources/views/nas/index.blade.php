@@ -483,7 +483,7 @@
             },
             startPolling() {
                 this.fetchStats();
-                setInterval(() => this.fetchStats(), 1000);
+                setInterval(() => this.fetchStats(), 30000);
             },
             
             async fetchStats() {
