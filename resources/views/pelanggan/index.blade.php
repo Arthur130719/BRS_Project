@@ -618,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    const debouncedFetch = debounce(fetchPelanggans, 600);
+    const debouncedFetch = debounce(fetchPelanggans, 250);
 
     if(searchInput) {
         searchInput.addEventListener('input', function() {
