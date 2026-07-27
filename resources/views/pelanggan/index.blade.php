@@ -559,6 +559,20 @@ document.addEventListener('DOMContentLoaded', function() {
         tableContainer.style.opacity = '0.5';
         tableContainer.style.pointerEvents = 'none';
         
+        // Add spinner overlay
+        if (!document.getElementById('fetchSpinner')) {
+            const spinner = document.createElement('div');
+            spinner.id = 'fetchSpinner';
+            spinner.innerHTML = '<i class="fas fa-spinner fa-spin fa-3x" style="color:#60a5fa;"></i>';
+            spinner.style.position = 'absolute';
+            spinner.style.top = '50%';
+            spinner.style.left = '50%';
+            spinner.style.transform = 'translate(-50%, -50%)';
+            spinner.style.zIndex = '10';
+            tableContainer.style.position = 'relative';
+            tableContainer.appendChild(spinner);
+        }
+        
         fetch(`${window.location.pathname}?${params.toString()}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -584,13 +598,23 @@ document.addEventListener('DOMContentLoaded', function() {
             // Remove visual loading state
             tableContainer.style.opacity = '1';
             tableContainer.style.pointerEvents = 'auto';
+            const spinner = document.getElementById('fetchSpinner');
+            if(spinner) spinner.remove();
         });
     };
 
     const debouncedFetch = debounce(fetchPelanggans, 300);
 
     // Attach listeners for live search
-    if(searchInput) searchInput.addEventListener('input', debouncedFetch);
+    if(searchInput) {
+        searchInput.addEventListener('input', function() {
+            // Reset dropdown filters automatically when typing in global search
+            if (statusFilter) statusFilter.value = '';
+            if (paketFilter) paketFilter.value = '';
+            if (nasFilter) nasFilter.value = '';
+            debouncedFetch();
+        });
+    }
     if(statusFilter) statusFilter.addEventListener('change', fetchPelanggans);
     if(paketFilter) paketFilter.addEventListener('change', fetchPelanggans);
     if(nasFilter) nasFilter.addEventListener('change', fetchPelanggans);
