@@ -31,11 +31,15 @@
                 {{-- Paket --}}
                 <td>
                     @if($p->paket)
-                        <div style="font-size:13px;color:var(--text-1);">{{ $p->paket->nama }}</div>
+                        <a href="#" 
+                           onclick="document.getElementById('paketFilter').value='{{ $p->paket->id }}'; document.getElementById('paketFilter').dispatchEvent(new Event('change')); return false;" 
+                           style="font-size:13px;color:var(--indigo);text-decoration:underline;font-weight:500;">
+                            {{ $p->paket->nama }}
+                        </a>
                         <div class="mono-mute" style="font-size:11px;">
                             {{ $p->paket->kecepatan_down }}↓ / {{ $p->paket->kecepatan_up }}↑ Mbps
                             @if($p->paket->mikrotik_profile)
-                            &bull; <span style="color:var(--indigo);">{{ $p->paket->mikrotik_profile }}</span>
+                            &bull; <span>{{ $p->paket->mikrotik_profile }}</span>
                             @endif
                         </div>
                     @else
@@ -46,7 +50,11 @@
                 {{-- NAS --}}
                 <td>
                     @if($p->nas)
-                        <div style="font-size:12px;color:var(--text-2);">{{ $p->nas->nama }}</div>
+                        <a href="#" 
+                           onclick="document.getElementById('nasFilter').value='{{ $p->nas->id }}'; document.getElementById('nasFilter').dispatchEvent(new Event('change')); return false;" 
+                           style="font-size:12px;color:var(--indigo);text-decoration:underline;font-weight:500;">
+                            {{ $p->nas->nama }}
+                        </a>
                     @else
                         <span class="text-mute">—</span>
                     @endif
