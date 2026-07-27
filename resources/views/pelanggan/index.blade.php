@@ -548,7 +548,15 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
+    let currentFetchController = null;
+
     const fetchPelanggans = () => {
+        if (currentFetchController) {
+            currentFetchController.abort();
+        }
+        currentFetchController = new AbortController();
+        const signal = currentFetchController.signal;
+
         const formData = new FormData(filterForm);
         const params = new URLSearchParams(formData);
         
@@ -574,6 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         fetch(`${window.location.pathname}?${params.toString()}`, {
+            signal: signal,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
@@ -593,8 +602,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         })
-        .catch(error => console.error('Error fetching data:', error))
+        .catch(error => {
+            if (error.name === 'AbortError') return;
+            console.error('Error fetching data:', error);
+        })
         .finally(() => {
+            if (signal.aborted) return;
             // Remove visual loading state
             tableContainer.style.opacity = '1';
             tableContainer.style.pointerEvents = 'auto';
