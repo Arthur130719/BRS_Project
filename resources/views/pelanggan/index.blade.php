@@ -559,15 +559,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(filterForm);
         const params = new URLSearchParams(formData);
-        
-        // Append _t to avoid cache
         params.set('_t', new Date().getTime());
         
-        // Add visual loading state
         tableContainer.style.opacity = '0.5';
         tableContainer.style.pointerEvents = 'none';
         
-        // Add spinner overlay
         if (!document.getElementById('fetchSpinner')) {
             const spinner = document.createElement('div');
             spinner.id = 'fetchSpinner';
@@ -581,34 +577,37 @@ document.addEventListener('DOMContentLoaded', function() {
             tableContainer.appendChild(spinner);
         }
         
-        fetch(`${window.location.pathname}?${params.toString()}`, {
+        const fetchUrl = `${filterForm.action.split('?')[0]}?${params.toString()}`;
+        console.log('Fetching:', fetchUrl);
+
+        fetch(fetchUrl, {
             signal: signal,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
         .then(data => {
             if(data.html) {
                 tableContainer.innerHTML = data.html;
                 updateBulkGenerate();
                 attachSortListeners();
                 
-                // Update total count
                 const totalText = document.querySelector('.toolbar-right .mono-mute');
-                if (totalText) {
-                    totalText.textContent = data.total + ' data';
-                }
+                if (totalText) totalText.textContent = data.total + ' data';
             }
         })
         .catch(error => {
             if (error.name === 'AbortError') return;
-            console.error('Error fetching data:', error);
+            console.error('AJAX Error:', error);
+            alert('Gagal memuat data pelanggan. Silakan refresh halaman.');
         })
         .finally(() => {
             if (signal.aborted) return;
-            // Remove visual loading state
             tableContainer.style.opacity = '1';
             tableContainer.style.pointerEvents = 'auto';
             const spinner = document.getElementById('fetchSpinner');
@@ -618,13 +617,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const debouncedFetch = debounce(fetchPelanggans, 600);
 
-    // Attach listeners for live search
     if(searchInput) {
         searchInput.addEventListener('input', function() {
-            // Reset dropdown filters automatically when typing in global search
-            if (statusFilter) statusFilter.value = '';
-            if (paketFilter) paketFilter.value = '';
-            if (nasFilter) nasFilter.value = '';
+            // Kita BUKAN mereset filter di sini lagi. Biarkan filter tetap aktif.
+            // Jika pencarian tidak ketemu di filter tersebut, biarkan tampil "Tidak ada data".
             debouncedFetch();
         });
     }
@@ -632,7 +628,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if(paketFilter) paketFilter.addEventListener('change', debouncedFetch);
     if(nasFilter) nasFilter.addEventListener('change', debouncedFetch);
 
-    // Prevent default form submit if JS is enabled
     if(filterForm) {
         filterForm.addEventListener('submit', function(e) {
             e.preventDefault();
