@@ -58,7 +58,7 @@ class PelangganController extends Controller
         if ($sortBy === 'paket_harga') {
             $query->leftJoin('pakets', 'pelanggans.paket_id', '=', 'pakets.id')
                   ->orderBy('pakets.harga', $sortDir);
-        } elseif (in_array($sortBy, ['nama', 'username_pppoe', 'ip_address', 'status', 'tgl_jatuh_tempo', 'created_at'])) {
+        } elseif (in_array($sortBy, ['nama', 'username_pppoe', 'ip_address', 'status', 'tgl_jatuh_tempo', 'created_at', 'nas_id', 'paket_id'])) {
             $query->orderBy($sortBy, $sortDir);
         } else {
             $query->orderBy('created_at', 'desc');

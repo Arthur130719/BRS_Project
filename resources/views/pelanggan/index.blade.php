@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Append _t to avoid cache
         params.set('_t', new Date().getTime());
         
-        fetch(`${filterForm.action}?${params.toString()}`, {
+        fetch(`${window.location.pathname}?${params.toString()}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
