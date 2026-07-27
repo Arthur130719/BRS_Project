@@ -4,12 +4,12 @@
             <tr>
                 <th style="width:40px;"><input type="checkbox" id="selectAllCheckbox"></th>
                 <th style="width:40px;">#</th>
-                <th><a href="#" class="sortable" data-sort="nama">Nama / Username PPPoE <i class="fas fa-sort"></i></a></th>
-                <th><a href="#" class="sortable" data-sort="paket_harga">Paket <i class="fas fa-sort"></i></a></th>
-                <th><a href="#" class="sortable" data-sort="nas_id">NAS <i class="fas fa-sort"></i></a></th>
-                <th><a href="#" class="sortable" data-sort="ip_address">IP Address <i class="fas fa-sort"></i></a></th>
-                <th><a href="#" class="sortable" data-sort="status">Status <i class="fas fa-sort"></i></a></th>
-                <th><a href="#" class="sortable" data-sort="tgl_jatuh_tempo">Jatuh Tempo <i class="fas fa-sort"></i></a></th>
+                <th><a href="#" class="sortable" data-sort="nama" style="color:inherit; text-decoration:none;">Nama / Username PPPoE <i class="fas fa-sort"></i></a></th>
+                <th><a href="#" class="sortable" data-sort="paket_harga" style="color:inherit; text-decoration:none;">Paket <i class="fas fa-sort"></i></a></th>
+                <th><a href="#" class="sortable" data-sort="nas_id" style="color:inherit; text-decoration:none;">NAS <i class="fas fa-sort"></i></a></th>
+                <th><a href="#" class="sortable" data-sort="ip_address" style="color:inherit; text-decoration:none;">IP Address <i class="fas fa-sort"></i></a></th>
+                <th><a href="#" class="sortable" data-sort="status" style="color:inherit; text-decoration:none;">Status <i class="fas fa-sort"></i></a></th>
+                <th><a href="#" class="sortable" data-sort="tgl_jatuh_tempo" style="color:inherit; text-decoration:none;">Jatuh Tempo <i class="fas fa-sort"></i></a></th>
                 <th style="text-align:right;">Aksi</th>
             </tr>
         </thead>
@@ -33,7 +33,7 @@
                     @if($p->paket)
                         <a href="#" 
                            onclick="document.getElementById('paketFilter').value='{{ $p->paket->id }}'; document.getElementById('paketFilter').dispatchEvent(new Event('change')); return false;" 
-                           style="font-size:13px;color:var(--indigo);text-decoration:underline;font-weight:500;">
+                           style="font-size:13px;color:#60a5fa;text-decoration:underline;font-weight:500;">
                             {{ $p->paket->nama }}
                         </a>
                         <div class="mono-mute" style="font-size:11px;">
@@ -52,7 +52,7 @@
                     @if($p->nas)
                         <a href="#" 
                            onclick="document.getElementById('nasFilter').value='{{ $p->nas->id }}'; document.getElementById('nasFilter').dispatchEvent(new Event('change')); return false;" 
-                           style="font-size:12px;color:var(--indigo);text-decoration:underline;font-weight:500;">
+                           style="font-size:12px;color:#60a5fa;text-decoration:underline;font-weight:500;">
                             {{ $p->nas->nama }}
                         </a>
                     @else
