@@ -977,9 +977,7 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
         </div>
         <div class="dropdown-menu">
           <a href="{{ route('radius.index') }}" class="dropdown-item {{ request()->routeIs('radius.*') ? 'active' : '' }}">
-            <i class="fas fa-circle-dot"></i> RADIUS
-            @php $onlineCount = \App\Models\RadiusSession::count(); @endphp
-            @if($onlineCount) <span class="nav-badge green">{{ $onlineCount }}</span> @endif
+            <i class="fas fa-circle-dot"></i> Sesi Aktif (PPPoE)
           </a>
 
           <a href="{{ route('nas.index') }}" class="dropdown-item {{ request()->routeIs('nas.*') ? 'active' : '' }}">
@@ -1126,7 +1124,7 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
 
     @if(auth()->user()->hasRole(['admin','teknisi']))
     <div class="mob-section-title">Jaringan</div>
-    <a href="{{ route('radius.index') }}" class="{{ request()->routeIs('radius.*') ? 'active' : '' }}"><i class="fas fa-circle-dot" style="width:20px"></i> RADIUS</a>
+    <a href="{{ route('radius.index') }}" class="{{ request()->routeIs('radius.*') ? 'active' : '' }}"><i class="fas fa-circle-dot" style="width:20px"></i> Sesi Aktif (PPPoE)</a>
 
     <a href="{{ route('nas.index') }}" class="{{ request()->routeIs('nas.*') ? 'active' : '' }}"><i class="fas fa-server" style="width:20px"></i> NAS Router</a>
     @endif
