@@ -352,7 +352,10 @@
 <div class="card">
 
     {{-- ── Toolbar / Filters ── --}}
-    <form method="GET" action="{{ route('pelanggan.index') }}">
+    <form method="GET" action="{{ route('pelanggan.index') }}" id="filterForm">
+        <input type="hidden" name="sort_by" id="sort_by" value="{{ request('sort_by', 'created_at') }}">
+        <input type="hidden" name="sort_dir" id="sort_dir" value="{{ request('sort_dir', 'desc') }}">
+        
         <div class="table-toolbar">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 {{-- Search --}}
@@ -360,15 +363,17 @@
                     <i class="fas fa-magnifying-glass"></i>
                     <input type="text"
                            name="search"
+                           id="searchInput"
                            value="{{ request('search') }}"
-                           placeholder="Cari nama, PPPoE, IP, telp...">
+                           placeholder="Cari nama, PPPoE, IP, telp..."
+                           autocomplete="off">
                 </div>
 
                 {{-- Status filter --}}
                 <select name="status"
+                        id="statusFilter"
                         class="form-control"
-                        style="width:auto;height:32px;padding:0 10px;font-size:12px;"
-                        onchange="this.form.submit()">
+                        style="width:auto;height:32px;padding:0 10px;font-size:12px;">
                     <option value="">Semua Status</option>
                     <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Aktif</option>
                     <option value="suspend"  {{ request('status') === 'suspend'  ? 'selected' : '' }}>Isolir / Suspend</option>
@@ -377,9 +382,9 @@
 
                 {{-- Paket filter --}}
                 <select name="paket_id"
+                        id="paketFilter"
                         class="form-control"
-                        style="width:auto;height:32px;padding:0 10px;font-size:12px;"
-                        onchange="this.form.submit()">
+                        style="width:auto;height:32px;padding:0 10px;font-size:12px;">
                     <option value="">Semua Paket</option>
                     @foreach($pakets as $paket)
                         <option value="{{ $paket->id }}" {{ request('paket_id') == $paket->id ? 'selected' : '' }}>
@@ -387,8 +392,21 @@
                         </option>
                     @endforeach
                 </select>
+                
+                {{-- NAS filter --}}
+                <select name="nas_id"
+                        id="nasFilter"
+                        class="form-control"
+                        style="width:auto;height:32px;padding:0 10px;font-size:12px;">
+                    <option value="">Semua NAS</option>
+                    @foreach($nases as $nas)
+                        <option value="{{ $nas->id }}" {{ request('nas_id') == $nas->id ? 'selected' : '' }}>
+                            {{ $nas->nama }}
+                        </option>
+                    @endforeach
+                </select>
 
-                @if(request()->hasAny(['search','status','paket_id']))
+                @if(request()->hasAny(['search','status','paket_id','nas_id']))
                     <a href="{{ route('pelanggan.index') }}" class="btn btn-ghost btn-sm">
                         <i class="fas fa-xmark"></i> Reset
                     </a>
@@ -407,173 +425,8 @@
     </form>
 
     {{-- ── Table ── --}}
-    <div class="card-body-flush">
-        <div class="table-wrap">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th style="width:40px;"><input type="checkbox" id="selectAllCheckbox"></th>
-                        <th style="width:40px;">#</th>
-                        <th>Nama / Username PPPoE</th>
-                        <th>Paket</th>
-                        <th>NAS</th>
-                        <th>IP Address</th>
-                        <th>Status</th>
-                        <th>Jatuh Tempo</th>
-                        <th style="text-align:right;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($pelanggans as $i => $p)
-                    <tr>
-                        {{-- No --}}
-                        {{-- Checkbox --}}
-                        <td><input type="checkbox" class="row-checkbox" value="{{ $p->id }}" onchange="updateBulkGenerate()"></td>
-
-                        {{-- No --}}
-                        <td class="mono-mute">{{ $pelanggans->firstItem() + $i }}</td>
-
-                        {{-- Nama / Username --}}
-                        <td>
-                            <div style="font-weight:500;color:var(--text-1);">{{ $p->nama }}</div>
-                            <div class="mono-mute" style="margin-top:2px;">{{ $p->username_pppoe }}</div>
-                        </td>
-
-                        {{-- Paket --}}
-                        <td>
-                            @if($p->paket)
-                                <div style="font-size:13px;color:var(--text-1);">{{ $p->paket->nama }}</div>
-                                <div class="mono-mute" style="font-size:11px;">
-                                    {{ $p->paket->kecepatan_down }}↓ / {{ $p->paket->kecepatan_up }}↑ Mbps
-                                    @if($p->paket->mikrotik_profile)
-                                    &bull; <span style="color:var(--indigo);">{{ $p->paket->mikrotik_profile }}</span>
-                                    @endif
-                                </div>
-                            @else
-                                <span class="text-mute">—</span>
-                            @endif
-                        </td>
-
-                        {{-- NAS --}}
-                        <td>
-                            @if($p->nas)
-                                <div style="font-size:12px;color:var(--text-2);">{{ $p->nas->nama }}</div>
-                            @else
-                                <span class="text-mute">—</span>
-                            @endif
-                        </td>
-
-                        {{-- IP Address --}}
-                        <td>
-                            @if($p->ip_address)
-                                <span class="mono">{{ $p->ip_address }}</span>
-                            @else
-                                <span class="mono-mute">—</span>
-                            @endif
-                        </td>
-
-                        {{-- Status Badge --}}
-                        <td>{!! $p->status_badge !!}</td>
-
-                        {{-- Jatuh Tempo --}}
-                        <td>
-                            @if($p->expiry)
-                                @php 
-                                    $isExpired = $p->expiry->isPast(); 
-                                    $sisaHari = (int) now()->startOfDay()->diffInDays($p->expiry->startOfDay(), false);
-                                @endphp
-                                <span class="mono"
-                                      style="color: {{ $isExpired ? 'var(--red)' : ($sisaHari <= 7 && $sisaHari >= 0 ? 'var(--amber)' : 'var(--text-2)') }}">
-                                    {{ $p->expiry->format('d M Y') }}
-                                </span>
-                                @if($isExpired)
-                                    <div style="font-size:10px;color:var(--red);margin-top:2px;">Sudah lewat</div>
-                                @elseif($sisaHari <= 7 && $sisaHari >= 0)
-                                    <div style="font-size:10px;color:var(--amber);margin-top:2px;">{{ $sisaHari }} hari lagi</div>
-                                @endif
-                            @else
-                                <span class="mono-mute">—</span>
-                            @endif
-                        </td>
-
-                        {{-- Aksi --}}
-                        <td style="text-align:right;">
-                            <div style="display:inline-flex;gap:4px;align-items:center;">
-                                {{-- Detail --}}
-                                <a href="{{ route('pelanggan.show', $p->id) }}" class="btn btn-ghost btn-xs">
-                                    <i class="fas fa-eye"></i> Detail
-                                </a>
-
-                                {{-- Edit — admin & kasir --}}
-                                @if(auth()->user()->hasRole(['admin', 'kasir']))
-                                    <a href="{{ route('pelanggan.edit', $p->id) }}" class="btn btn-ghost btn-xs">
-                                        <i class="fas fa-pen"></i>
-                                    </a>
-                                @endif
-
-                                {{-- Suspend / Aktifkan toggle — admin & kasir --}}
-                                @if(auth()->user()->hasRole(['admin', 'kasir']))
-                                    @if($p->status === 'active')
-                                        <form method="POST" action="{{ route('pelanggan.suspend', $p->id) }}" style="display:contents;">
-                                            @csrf
-                                            <button type="submit"
-                                                    class="btn btn-warning btn-xs"
-                                                    onclick="return confirm('Isolir pelanggan {{ addslashes($p->nama) }}?')">
-                                                <i class="fas fa-lock"></i> Isolir
-                                            </button>
-                                        </form>
-                                    @elseif($p->status === 'suspend')
-                                        <form method="POST" action="{{ route('pelanggan.aktifkan', $p->id) }}" style="display:contents;">
-                                            @csrf
-                                            <button type="submit"
-                                                    class="btn btn-success btn-xs"
-                                                    onclick="return confirm('Aktifkan kembali pelanggan {{ addslashes($p->nama) }}?')">
-                                                <i class="fas fa-lock-open"></i> Aktifkan
-                                            </button>
-                                        </form>
-                                    @endif
-                                @endif
-
-                                {{-- Hapus — admin & kasir --}}
-                                @if(auth()->user()->hasRole(['admin', 'kasir']))
-                                    <form method="POST" action="{{ route('pelanggan.destroy', $p->id) }}" style="display:contents;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="btn btn-danger btn-xs"
-                                                onclick="return confirm('Hapus pelanggan {{ addslashes($p->nama) }}? Tindakan ini tidak dapat dibatalkan!')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="8">
-                            <div class="empty-state">
-                                <i class="fas fa-users-slash"></i>
-                                <h3>Belum ada pelanggan</h3>
-                                <p>
-                                    @if(request()->hasAny(['search','status','paket_id']))
-                                        Tidak ada data yang cocok dengan filter pencarian Anda.
-                                    @else
-                                        Mulai tambahkan pelanggan dengan klik tombol "Tambah Pelanggan".
-                                    @endif
-                                </p>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        {{-- ── Pagination ── --}}
-        @if($pelanggans->hasPages())
-            {{ $pelanggans->links() }}
-        @endif
+    <div class="card-body-flush" id="tableContainer">
+        @include('pelanggan.partials.table')
     </div>
 
 </div>{{-- /card --}}
@@ -670,7 +523,100 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Auto-refresh data pelanggan setiap 5 detik agar real-time
+    // -- Live Search & Filtering --
+    const filterForm = document.getElementById('filterForm');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const paketFilter = document.getElementById('paketFilter');
+    const nasFilter = document.getElementById('nasFilter');
+    const tableContainer = document.getElementById('tableContainer');
+    
+    // Sort states
+    const sortByInput = document.getElementById('sort_by');
+    const sortDirInput = document.getElementById('sort_dir');
+
+    // Debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    const fetchPelanggans = () => {
+        const formData = new FormData(filterForm);
+        const params = new URLSearchParams(formData);
+        
+        // Append _t to avoid cache
+        params.set('_t', new Date().getTime());
+        
+        fetch(`${filterForm.action}?${params.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.html) {
+                tableContainer.innerHTML = data.html;
+                updateBulkGenerate();
+                attachSortListeners();
+                
+                // Update total count
+                const totalText = document.querySelector('.toolbar-right .mono-mute');
+                if (totalText) {
+                    totalText.textContent = data.total + ' data';
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    };
+
+    const debouncedFetch = debounce(fetchPelanggans, 300);
+
+    // Attach listeners for live search
+    if(searchInput) searchInput.addEventListener('input', debouncedFetch);
+    if(statusFilter) statusFilter.addEventListener('change', fetchPelanggans);
+    if(paketFilter) paketFilter.addEventListener('change', fetchPelanggans);
+    if(nasFilter) nasFilter.addEventListener('change', fetchPelanggans);
+
+    // Prevent default form submit if JS is enabled
+    if(filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            fetchPelanggans();
+        });
+    }
+
+    // Function to attach sort listeners to new HTML
+    function attachSortListeners() {
+        document.querySelectorAll('.sortable').forEach(el => {
+            el.addEventListener('click', function(e) {
+                e.preventDefault();
+                const col = this.dataset.sort;
+                let currentDir = sortDirInput.value;
+                let currentSort = sortByInput.value;
+                
+                if (currentSort === col) {
+                    sortDirInput.value = currentDir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortByInput.value = col;
+                    sortDirInput.value = 'asc';
+                }
+                
+                fetchPelanggans();
+            });
+        });
+    }
+    attachSortListeners();
+
+    // Auto-refresh data pelanggan setiap 10 detik
     setInterval(function() {
         // Jangan auto-refresh kalau sedang pilih checkbox (biar centangan ga ilang)
         if (document.querySelectorAll('.row-checkbox:checked').length > 0) return;
@@ -687,25 +633,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isModalOpen) return;
 
-        // Tambahkan timestamp untuk mencegah browser melakukan caching
-        let url = new URL(window.location.href);
-        url.searchParams.set('_t', new Date().getTime());
-
-        fetch(url.toString(), {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const newTbody = doc.querySelector('.table-wrap tbody');
-            const oldTbody = document.querySelector('.table-wrap tbody');
-            if (newTbody && oldTbody) {
-                oldTbody.innerHTML = newTbody.innerHTML;
-            }
-        })
-        .catch(err => console.error('Gagal update tabel:', err));
-    }, 5000);
+        // Use the same fetch function to refresh
+        fetchPelanggans();
+    }, 10000);
 });
 </script>
 @endpush

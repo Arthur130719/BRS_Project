@@ -23,15 +23,13 @@ class PelangganController extends Controller
 
     public function index(Request $request)
     {
-        $query = Pelanggan::with(['paket', 'nas', 'olt']);
+        $query = Pelanggan::select('pelanggans.*')->with(['paket', 'nas', 'olt']);
 
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(fn($q) => $q
-                ->where('nama', 'like', "$s%")
-                ->orWhere('nama', 'like', "% $s%")
-                ->orWhere('username_pppoe', 'like', "$s%")
-                ->orWhere('username_pppoe', 'like', "% $s%")
+                ->where('nama', 'like', "%$s%")
+                ->orWhere('username_pppoe', 'like', "%$s%")
                 ->orWhere('phone', 'like', "%$s%")
                 ->orWhere('ip_address', 'like', "%$s%")
             );
@@ -45,10 +43,39 @@ class PelangganController extends Controller
             $query->where('paket_id', $request->paket_id);
         }
 
-        $pelanggans = $query->latest()->paginate(15)->withQueryString();
-        $pakets     = Paket::where('is_active', true)->get();
+        if ($request->filled('nas_id')) {
+            $query->where('nas_id', $request->nas_id);
+        }
 
-        return view('pelanggan.index', compact('pelanggans', 'pakets'));
+        // Sorting Logic
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDir = $request->get('sort_dir', 'desc');
+        
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'desc';
+        }
+
+        if ($sortBy === 'paket_harga') {
+            $query->leftJoin('pakets', 'pelanggans.paket_id', '=', 'pakets.id')
+                  ->orderBy('pakets.harga', $sortDir);
+        } elseif (in_array($sortBy, ['nama', 'username_pppoe', 'ip_address', 'status', 'tgl_jatuh_tempo', 'created_at'])) {
+            $query->orderBy($sortBy, $sortDir);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $pelanggans = $query->paginate(15)->withQueryString();
+        $pakets     = Paket::where('is_active', true)->get();
+        $nases      = \App\Models\Nas::all();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('pelanggan.partials.table', compact('pelanggans'))->render(),
+                'total' => $pelanggans->total()
+            ]);
+        }
+
+        return view('pelanggan.index', compact('pelanggans', 'pakets', 'nases'));
     }
 
     public function create()
