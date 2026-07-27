@@ -28,23 +28,23 @@ class PelangganController extends Controller
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(fn($q) => $q
-                ->where('nama', 'like', "%$s%")
-                ->orWhere('username_pppoe', 'like', "%$s%")
-                ->orWhere('phone', 'like', "%$s%")
-                ->orWhere('ip_address', 'like', "%$s%")
+                ->where('pelanggans.nama', 'like', "%$s%")
+                ->orWhere('pelanggans.username_pppoe', 'like', "%$s%")
+                ->orWhere('pelanggans.phone', 'like', "%$s%")
+                ->orWhere('pelanggans.ip_address', 'like', "%$s%")
             );
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('pelanggans.status', $request->status);
         }
 
         if ($request->filled('paket_id')) {
-            $query->where('paket_id', $request->paket_id);
+            $query->where('pelanggans.paket_id', $request->paket_id);
         }
 
         if ($request->filled('nas_id')) {
-            $query->where('nas_id', $request->nas_id);
+            $query->where('pelanggans.nas_id', $request->nas_id);
         }
 
         // Sorting Logic
