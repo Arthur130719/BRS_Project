@@ -587,8 +587,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
+        .then(async response => {
+            if (!response.ok) {
+                const text = await response.text().catch(() => '');
+                throw new Error(`HTTP ${response.status} ${response.statusText} - ${text.substring(0, 100)}`);
+            }
             return response.json();
         })
         .then(data => {
