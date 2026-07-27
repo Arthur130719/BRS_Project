@@ -15,6 +15,48 @@
     </div>
     <div class="page-header-actions">
         @if(auth()->user()->hasRole(['admin', 'kasir']))
+        
+        {{-- BULK GENERATE INVOICE --}}
+        <div x-data="{ openBulkInvoice: false }" style="display:inline-block; margin-right: 8px;">
+            <button type="button" @click="openBulkInvoice = true" class="btn btn-primary" id="btnBulkInvoice" style="display:none; background:var(--sky); border-color:var(--sky);">
+                <i class="fas fa-file-invoice-dollar"></i> Buat Tagihan (<span id="bulkCount">0</span>)
+            </button>
+            <template x-teleport="body">
+                <div x-show="openBulkInvoice" class="modal-overlay" @click.self="openBulkInvoice = false" style="display:none;" x-cloak>
+                    <div class="modal" @click.stop>
+                        <div class="modal-header">
+                            <span class="modal-title"><i class="fas fa-file-invoice-dollar" style="color:var(--sky);margin-right:8px;"></i>Buat Tagihan Massal</span>
+                            <button class="modal-close" @click="openBulkInvoice = false"><i class="fas fa-xmark"></i></button>
+                        </div>
+                        <form method="POST" action="{{ route('invoice.bulkGenerateSelected') }}" id="bulkInvoiceForm">
+                            @csrf
+                            <div id="hiddenBulkInputs"></div>
+                            <div class="modal-body">
+                                <div style="padding:12px; background:var(--sky-dim); color:var(--sky); border:1px solid rgba(14,165,233,0.2); border-radius:6px; font-size:12px; margin-bottom: 15px;">
+                                    <i class="fas fa-info-circle" style="margin-right:4px;"></i>
+                                    Tagihan akan dibuat untuk <strong><span id="bulkCountModal">0</span> pelanggan</strong> yang dicentang. Pelanggan yang sudah memiliki tagihan Unpaid atau tidak punya paket akan dilewati otomatis.
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Periode Tagihan <span style="color:var(--red)">*</span></label>
+                                    <input type="text" name="periode" class="form-control" placeholder="Contoh: Agustus 2026" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tanggal Jatuh Tempo <span style="color:var(--red)">*</span></label>
+                                    <input type="date" name="tgl_jatuh_tempo" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+                                <button type="button" class="btn btn-ghost" @click="openBulkInvoice = false">Batal</button>
+                                <button type="submit" class="btn btn-primary" style="background:var(--sky); border-color:var(--sky);">
+                                    <i class="fas fa-check"></i> Proses Tagihan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </template>
+        </div>
+
         <div x-data="{ openImport: false }" style="display:inline-block; margin-right: 8px;">
             <button @click="openImport = true" class="btn btn-ghost">
                 <i class="fas fa-file-import"></i> Import .rsc
@@ -335,6 +377,7 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <th style="width:40px;"><input type="checkbox" id="selectAllCheckbox"></th>
                         <th style="width:40px;">#</th>
                         <th>Nama / Username PPPoE</th>
                         <th>Paket</th>
@@ -348,6 +391,10 @@
                 <tbody>
                     @forelse($pelanggans as $i => $p)
                     <tr>
+                        {{-- No --}}
+                        {{-- Checkbox --}}
+                        <td><input type="checkbox" class="row-checkbox" value="{{ $p->id }}" onchange="updateBulkGenerate()"></td>
+
                         {{-- No --}}
                         <td class="mono-mute">{{ $pelanggans->firstItem() + $i }}</td>
 
@@ -516,9 +563,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @push('scripts')
 <script>
+function updateBulkGenerate() {
+    const checked = document.querySelectorAll('.row-checkbox:checked');
+    const count = checked.length;
+    const btn = document.getElementById('btnBulkInvoice');
+    const badge = document.getElementById('bulkCount');
+    const modalBadge = document.getElementById('bulkCountModal');
+    const hiddenInputsContainer = document.getElementById('hiddenBulkInputs');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    // Update button visibility and badge
+    if (count > 0) {
+        btn.style.display = 'inline-block';
+        badge.textContent = count;
+        if (modalBadge) modalBadge.textContent = count;
+    } else {
+        btn.style.display = 'none';
+    }
+    
+    // Check/Uncheck "Select All" dynamically
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    if (allCheckboxes.length > 0 && count === allCheckboxes.length) {
+        if (selectAllCheckbox) selectAllCheckbox.checked = true;
+    } else {
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    }
+
+    // Populate hidden form inputs
+    hiddenInputsContainer.innerHTML = '';
+    checked.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'pelanggan_ids[]';
+        input.value = cb.value;
+        hiddenInputsContainer.appendChild(input);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            rowCheckboxes.forEach(cb => cb.checked = this.checked);
+            updateBulkGenerate();
+        });
+    }
+
     // Auto-refresh data pelanggan setiap 5 detik agar real-time
     setInterval(function() {
+        // Jangan auto-refresh kalau sedang pilih checkbox (biar centangan ga ilang)
+        if (document.querySelectorAll('.row-checkbox:checked').length > 0) return;
+
         // Cek apakah ada modal yang sedang terbuka (terlihat di layar)
         let modals = document.querySelectorAll('.modal-overlay');
         let isModalOpen = false;

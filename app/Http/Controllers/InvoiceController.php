@@ -155,4 +155,54 @@ class InvoiceController extends Controller
         $pdf = Pdf::loadView('invoice.pdf', compact('invoice'));
         return $pdf->download('invoice-' . $invoice->no_invoice . '.pdf');
     }
+    public function bulkGenerateSelected(Request $request)
+    {
+        $validated = $request->validate([
+            'pelanggan_ids'   => 'required|array|min:1',
+            'pelanggan_ids.*' => 'exists:pelanggans,id',
+            'periode'         => 'required|max:50',
+            'tgl_jatuh_tempo' => 'required|date',
+        ]);
+
+        $pelanggans = Pelanggan::with('paket')->whereIn('id', $validated['pelanggan_ids'])->get();
+        $generated = 0;
+        $skipped = 0;
+
+        foreach ($pelanggans as $pelanggan) {
+            // Cek apakah sudah punya tagihan unpaid
+            $hasUnpaid = Invoice::where('pelanggan_id', $pelanggan->id)
+                                ->where('status', 'unpaid')
+                                ->exists();
+            if ($hasUnpaid) {
+                $skipped++;
+                continue;
+            }
+
+            // Jika tidak ada paket, skip
+            if (!$pelanggan->paket) {
+                $skipped++;
+                continue;
+            }
+
+            $invoice = Invoice::create([
+                'pelanggan_id'    => $pelanggan->id,
+                'no_invoice'      => Invoice::generateNoInvoice(),
+                'periode'         => $validated['periode'],
+                'nominal'         => $pelanggan->paket->harga,
+                'tgl_jatuh_tempo' => $validated['tgl_jatuh_tempo'],
+                'status'          => 'unpaid',
+                'keterangan'      => 'Generate Massal',
+            ]);
+
+            Notifikasi::create([
+                'type'      => 'info',
+                'title'     => 'Invoice Baru: ' . $invoice->no_invoice,
+                'deskripsi' => $invoice->pelanggan->nama . ' — ' . $invoice->periode . ' — ' . $invoice->nominal_format,
+            ]);
+
+            $generated++;
+        }
+
+        return back()->with('success', "Berhasil membuat {$generated} tagihan baru. ({$skipped} pelanggan dilewati karena sudah punya tagihan atau tidak memiliki paket).");
+    }
 }
