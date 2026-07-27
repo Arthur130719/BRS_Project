@@ -550,7 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentFetchController = null;
 
-    const fetchPelanggans = () => {
+    const fetchPelanggans = (isAutoRefresh = false) => {
         if (currentFetchController) {
             currentFetchController.abort();
         }
@@ -561,11 +561,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams(formData);
         params.set('_t', new Date().getTime());
         
-        // Ubah icon pencarian menjadi spinner
-        const searchIcon = document.getElementById('searchIcon');
-        if (searchIcon) {
-            searchIcon.className = 'fas fa-spinner fa-spin';
-            searchIcon.style.color = '#60a5fa';
+        // Ubah icon pencarian menjadi spinner hanya jika bukan dari auto-refresh
+        if (!isAutoRefresh) {
+            const searchIcon = document.getElementById('searchIcon');
+            if (searchIcon) {
+                searchIcon.className = 'fas fa-spinner fa-spin';
+                searchIcon.style.color = '#60a5fa';
+            }
         }
         
         const fetchUrl = `${window.location.pathname}?${params.toString()}`;
@@ -602,31 +604,31 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .finally(() => {
             if (signal.aborted) return;
-            const searchIcon = document.getElementById('searchIcon');
-            if (searchIcon) {
-                searchIcon.className = 'fas fa-magnifying-glass';
-                searchIcon.style.color = '';
+            if (!isAutoRefresh) {
+                const searchIcon = document.getElementById('searchIcon');
+                if (searchIcon) {
+                    searchIcon.className = 'fas fa-magnifying-glass';
+                    searchIcon.style.color = '';
+                }
             }
         });
     };
-
-    const debouncedFetch = debounce(fetchPelanggans, 250);
 
     if(searchInput) {
         searchInput.addEventListener('input', function() {
             // Panggil fetch langsung tanpa jeda (karena sudah ada AbortController)
             // Ini akan membuat pencarian terasa instan (live search sungguhan).
-            fetchPelanggans();
+            fetchPelanggans(false);
         });
     }
-    if(statusFilter) statusFilter.addEventListener('change', debouncedFetch);
-    if(paketFilter) paketFilter.addEventListener('change', debouncedFetch);
-    if(nasFilter) nasFilter.addEventListener('change', debouncedFetch);
+    if(statusFilter) statusFilter.addEventListener('change', () => fetchPelanggans(false));
+    if(paketFilter) paketFilter.addEventListener('change', () => fetchPelanggans(false));
+    if(nasFilter) nasFilter.addEventListener('change', () => fetchPelanggans(false));
 
     if(filterForm) {
         filterForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            fetchPelanggans();
+            fetchPelanggans(false);
         });
     }
 
@@ -646,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     sortDirInput.value = 'asc';
                 }
                 
-                fetchPelanggans();
+                fetchPelanggans(false);
             });
         });
     }
@@ -669,8 +671,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isModalOpen) return;
 
-        // Use the same fetch function to refresh
-        fetchPelanggans();
+        // Auto-refresh: Jangan tampilkan spinner agar tidak mengganggu (stealth refresh)
+        fetchPelanggans(true);
     }, 10000);
 });
 </script>
