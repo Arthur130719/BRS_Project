@@ -555,6 +555,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Append _t to avoid cache
         params.set('_t', new Date().getTime());
         
+        // Add visual loading state
+        tableContainer.style.opacity = '0.5';
+        tableContainer.style.pointerEvents = 'none';
+        
         fetch(`${window.location.pathname}?${params.toString()}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -575,7 +579,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         })
-        .catch(error => console.error('Error fetching data:', error));
+        .catch(error => console.error('Error fetching data:', error))
+        .finally(() => {
+            // Remove visual loading state
+            tableContainer.style.opacity = '1';
+            tableContainer.style.pointerEvents = 'auto';
+        });
     };
 
     const debouncedFetch = debounce(fetchPelanggans, 300);
