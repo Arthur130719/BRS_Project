@@ -299,6 +299,14 @@
                                     <i class="fas fa-check"></i>
                                 </button>
                             @endif
+                            {{-- Hapus --}}
+                            <form action="{{ route('invoice.destroy', $inv->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus invoice ini secara permanen?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-xs" title="Hapus Invoice">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>
