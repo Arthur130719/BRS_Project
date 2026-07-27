@@ -1184,6 +1184,11 @@ nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4; cursor: 
           <i class="fas fa-circle-exclamation"></i> {{ session('error') }}
         </div>
       @endif
+      @if(session('warning'))
+        <div class="alert alert-warning" x-data x-init="setTimeout(()=>$el.remove(), 10000)">
+          <i class="fas fa-triangle-exclamation"></i> {{ session('warning') }}
+        </div>
+      @endif
 
       @yield('content')
     </main>
