@@ -62,8 +62,14 @@
 
                 {{-- IP Address --}}
                 <td>
-                    @if($p->ip_address)
-                        <span class="mono">{{ $p->ip_address }}</span>
+                    @php
+                        $displayIp = $p->ip_address ?: ($liveIps[$p->username_pppoe] ?? null);
+                    @endphp
+                    @if($displayIp)
+                        <span class="mono">{{ $displayIp }}</span>
+                        @if(!$p->ip_address)
+                            <span style="font-size: 9px; padding: 2px 5px; margin-left: 4px; background: rgba(16,185,129,0.1); color: var(--green); border-radius: 4px; font-weight: 600;">Dynamic</span>
+                        @endif
                     @else
                         <span class="mono-mute">—</span>
                     @endif

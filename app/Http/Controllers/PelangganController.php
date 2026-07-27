@@ -68,14 +68,22 @@ class PelangganController extends Controller
         $pakets     = Paket::where('is_active', true)->get();
         $nases      = \App\Models\Nas::all();
 
+        $cachedSessions = \Illuminate\Support\Facades\Cache::get('mikrotik_live_sessions', []);
+        $liveIps = [];
+        foreach ($cachedSessions as $session) {
+            if (isset($session['name']) && isset($session['address'])) {
+                $liveIps[$session['name']] = $session['address'];
+            }
+        }
+
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('pelanggan.partials.table', compact('pelanggans'))->render(),
+                'html' => view('pelanggan.partials.table', compact('pelanggans', 'liveIps'))->render(),
                 'total' => $pelanggans->total()
             ]);
         }
 
-        return view('pelanggan.index', compact('pelanggans', 'pakets', 'nases'));
+        return view('pelanggan.index', compact('pelanggans', 'pakets', 'nases', 'liveIps'));
     }
 
     public function create()
