@@ -52,15 +52,6 @@
               <label class="form-label">Deskripsi (opsional)</label>
               <input type="text" name="deskripsi" class="form-control" value="{{ old('deskripsi') }}" placeholder="Keterangan tambahan">
             </div>
-            <div class="form-group" style="margin-top: 15px;">
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" name="tampil_di_web" value="1" checked style="width:18px;height:18px;cursor:pointer;">
-                <span style="font-weight:600; color:var(--text-1);">Tampilkan di Web Publik?</span>
-              </label>
-              <div style="font-size:12px; color:var(--text-4); margin-left:26px;">
-                Jika dicentang, paket ini akan terlihat di halaman pendaftaran pelanggan. Jangan dicentang jika ini adalah paket khusus (Private).
-              </div>
-            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-ghost" @click="open=false">Batal</button>
@@ -77,12 +68,7 @@
   <div class="card" x-data="{ editOpen: false }">
     <div class="card-header">
       <div>
-        <div class="card-title">
-          {{ $paket->nama }}
-          @if(!$paket->tampil_di_web)
-          <span style="font-size:10px; background:var(--text-4); color:white; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;">Hidden</span>
-          @endif
-        </div>
+        <div class="card-title">{{ $paket->nama }}</div>
         <div class="card-subtitle">{{ $paket->pelanggans_count }} pelanggan aktif</div>
       </div>
       <span class="badge {{ $paket->is_active ? 'badge-active' : 'badge-inactive' }}">
@@ -161,15 +147,6 @@
                 <option value="1" {{ $paket->is_active?'selected':'' }}>Aktif</option>
                 <option value="0" {{ !$paket->is_active?'selected':'' }}>Nonaktif</option>
               </select>
-            </div>
-            <div class="form-group" style="margin-top: 15px;">
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" name="tampil_di_web" value="1" {{ $paket->tampil_di_web ? 'checked' : '' }} style="width:18px;height:18px;cursor:pointer;">
-                <span style="font-weight:600; color:var(--text-1);">Tampilkan di Web Publik?</span>
-              </label>
-              <div style="font-size:12px; color:var(--text-4); margin-left:26px;">
-                Jika dicentang, paket ini akan terlihat di halaman pendaftaran pelanggan. Jangan dicentang jika ini adalah paket khusus (Private).
-              </div>
             </div>
           </div>
           <div class="modal-footer">

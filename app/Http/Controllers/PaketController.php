@@ -23,9 +23,6 @@ class PaketController extends Controller
             'harga'          => 'required|numeric|min:0',
             'deskripsi'      => 'nullable|max:255',
         ]);
-        
-        $validated['tampil_di_web'] = $request->has('tampil_di_web');
-        
         Paket::create($validated);
         return redirect()->route('paket.index')->with('success', 'Paket berhasil ditambahkan.');
     }
@@ -41,9 +38,6 @@ class PaketController extends Controller
             'deskripsi'      => 'nullable|max:255',
             'is_active'      => 'boolean',
         ]);
-        
-        $validated['tampil_di_web'] = $request->has('tampil_di_web');
-        
         $paket->update($validated);
         return redirect()->route('paket.index')->with('success', 'Paket berhasil diperbarui.');
     }

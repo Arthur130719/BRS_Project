@@ -16,7 +16,7 @@ use Carbon\Carbon;
 */
 
 Route::get('/paket', function () {
-    return Paket::where('is_active', true)->where('tampil_di_web', true)->get();
+    return Paket::all();
 });
 
 Route::post('/pelanggan/login', function (Request $request) {
