@@ -1640,7 +1640,7 @@ if ('serviceWorker' in navigator) {
       }
 
       // ── Update Permohonan Badge & Notify ──
-      const permohonanLinks = document.querySelectorAll('a[href*="permohonan"]');
+      const permohonanLinks = document.querySelectorAll('.top-nav a[href*="permohonan"], .sidebar-menu a[href*="permohonan"]');
       permohonanLinks.forEach(link => {
         let badge = link.querySelector('.nav-badge');
         if (data.pending_permohonan_count > 0) {
@@ -1663,7 +1663,7 @@ if ('serviceWorker' in navigator) {
       }
 
       // ── Update Job Order Badge ──
-      const ticketLinks = document.querySelectorAll('a[href*="tickets"]');
+      const ticketLinks = document.querySelectorAll('.top-nav a[href*="tickets"], .sidebar-menu a[href*="tickets"]');
       ticketLinks.forEach(link => {
         let badge = link.querySelector('.nav-badge');
         if (data.pending_ticket_count > 0) {
@@ -1688,7 +1688,7 @@ if ('serviceWorker' in navigator) {
       
       // ── Update Aduan Pelanggan Badge ──
       let lastAduanTime = window.lastAduanTime || null;
-      const aduanLinks = document.querySelectorAll('a[href*="support-tickets"]');
+      const aduanLinks = document.querySelectorAll('.top-nav a[href*="support-tickets"], .sidebar-menu a[href*="support-tickets"]');
       aduanLinks.forEach(link => {
         let badge = link.querySelector('.nav-badge');
         if (data.pending_aduan_count > 0) {
