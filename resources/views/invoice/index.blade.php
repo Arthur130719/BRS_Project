@@ -209,11 +209,9 @@
         </div>
     </form>
 
-    {{-- Bulk Delete Form --}}
-    <form id="bulkDeleteForm" action="{{ route('invoice.bulkDelete') }}" method="POST">
-        @csrf
-        <div class="toolbar-right" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
-            <button type="button" class="btn btn-danger btn-sm" id="btnBulkDelete" style="display:none;" onclick="if(confirm('Yakin ingin menghapus semua invoice yang dipilih?')) document.getElementById('bulkDeleteForm').submit();">
+    {{-- Bulk Delete Button --}}
+    <div class="toolbar-right" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
+            <button type="button" class="btn btn-danger btn-sm" id="btnBulkDelete" style="display:none;" onclick="submitBulkDelete()">
                 <i class="fas fa-trash-can"></i> Hapus Terpilih (<span id="bulkDeleteCount">0</span>)
             </button>
         </div>    {{-- Table --}}
@@ -342,8 +340,7 @@
                 @endforelse
             </tbody>
         </table>
-        </div>
-    </form>
+    </div>
 
     {{-- Pagination --}}
     @if($invoices->hasPages())
@@ -363,6 +360,32 @@
             btn.style.display = 'none';
             document.getElementById('selectAllInvoices').checked = false;
         }
+    }
+
+    function submitBulkDelete() {
+        if (!confirm('Yakin ingin menghapus semua invoice yang dipilih?')) return;
+        
+        const checkboxes = document.querySelectorAll('.invoice-checkbox:checked');
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("invoice.bulkDelete") }}';
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+
+        checkboxes.forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'invoice_ids[]';
+            input.value = cb.value;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
     }
     </script>
 
