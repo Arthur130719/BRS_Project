@@ -9,7 +9,7 @@ use App\Models\Olt;
 use App\Models\Paket;
 use App\Models\Pelanggan;
 use Illuminate\Http\Request;
-
+use Illuminate\Validation\Rule;
 use App\Services\MikrotikService;
 
 class PelangganController extends Controller
@@ -98,7 +98,11 @@ class PelangganController extends Controller
         }
 
         $validated = $request->validate([
-            'username_pppoe' => 'required|unique:pelanggans,username_pppoe|max:100',
+            'username_pppoe' => [
+                'required',
+                'max:100',
+                Rule::unique('pelanggans')->whereNull('deleted_at'),
+            ],
             'password_pppoe' => 'required|min:3',
             'nama'           => 'required|max:200',
             'phone'          => 'nullable|max:20',
@@ -182,7 +186,11 @@ class PelangganController extends Controller
         }
 
         $validated = $request->validate([
-            'username_pppoe' => 'required|unique:pelanggans,username_pppoe,' . $pelanggan->id . '|max:100',
+            'username_pppoe' => [
+                'required',
+                'max:100',
+                Rule::unique('pelanggans')->ignore($pelanggan->id)->whereNull('deleted_at'),
+            ],
             'password_pppoe' => 'nullable|min:3',
             'nama'           => 'required|max:200',
             'phone'          => 'nullable|max:20',
