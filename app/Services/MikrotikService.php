@@ -114,8 +114,14 @@ class MikrotikService
             $this->api->write('=password=' . $password, false);
             $this->api->write('=profile=' . $profileName, false);
             $this->api->write('=service=pppoe');
-            $this->api->read();
+            $response = $this->api->read();
             $this->disconnect();
+            
+            if (isset($response['!trap'])) {
+                $errorMsg = isset($response['!trap'][0]['message']) ? $response['!trap'][0]['message'] : 'Unknown error';
+                throw new Exception("Ditolak oleh MikroTik: " . $errorMsg);
+            }
+
             Log::info("MikroTik: Berhasil menambah user PPPoE {$username} ke NAS {$nas->nama}");
             return true;
         } catch (Exception $e) {
