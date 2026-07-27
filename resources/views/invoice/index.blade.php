@@ -209,11 +209,21 @@
         </div>
     </form>
 
-    {{-- Table --}}
+    {{-- Bulk Delete Form --}}
+    <form id="bulkDeleteForm" action="{{ route('invoice.bulkDelete') }}" method="POST">
+        @csrf
+        <div class="toolbar-right" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
+            <button type="button" class="btn btn-danger btn-sm" id="btnBulkDelete" style="display:none;" onclick="if(confirm('Yakin ingin menghapus semua invoice yang dipilih?')) document.getElementById('bulkDeleteForm').submit();">
+                <i class="fas fa-trash-can"></i> Hapus Terpilih (<span id="bulkDeleteCount">0</span>)
+            </button>
+        </div>    {{-- Table --}}
     <div class="table-wrap">
         <table class="table">
             <thead>
                 <tr>
+                    <th style="width: 40px; text-align: center;">
+                        <input type="checkbox" id="selectAllInvoices" onclick="const checkboxes = document.querySelectorAll('.invoice-checkbox'); checkboxes.forEach(cb => cb.checked = this.checked); updateBulkDeleteButton();">
+                    </th>
                     <th>#</th>
                     <th>No Invoice</th>
                     <th>Pelanggan</th>
@@ -231,6 +241,9 @@
                     $overdue = ($inv->status === 'unpaid' || $inv->status === 'partial') && $inv->tgl_jatuh_tempo && $inv->tgl_jatuh_tempo->isPast();
                 @endphp
                 <tr style="{{ $overdue ? 'border-left: 3px solid var(--red); background: rgba(239,68,68,0.03);' : '' }}">
+                    <td style="text-align: center;">
+                        <input type="checkbox" name="invoice_ids[]" value="{{ $inv->id }}" class="invoice-checkbox" onclick="updateBulkDeleteButton()">
+                    </td>
                     <td class="mono-mute">{{ $invoices->firstItem() + $idx }}</td>
                     <td>
                         <a href="{{ route('invoice.show', $inv->id) }}"
@@ -312,7 +325,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9">
+                    <td colspan="10">
                         <div class="empty-state">
                             <i class="fas fa-file-invoice-dollar"></i>
                             <h3>Belum ada invoice</h3>
@@ -329,13 +342,29 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
+        </div>
+    </form>
 
-    {{-- Pagination --}}
     {{-- Pagination --}}
     @if($invoices->hasPages())
         {{ $invoices->appends(request()->query())->links() }}
     @endif
+
+    <script>
+    function updateBulkDeleteButton() {
+        const checkboxes = document.querySelectorAll('.invoice-checkbox:checked');
+        const btn = document.getElementById('btnBulkDelete');
+        const countSpan = document.getElementById('bulkDeleteCount');
+        
+        if (checkboxes.length > 0) {
+            btn.style.display = 'inline-block';
+            countSpan.textContent = checkboxes.length;
+        } else {
+            btn.style.display = 'none';
+            document.getElementById('selectAllInvoices').checked = false;
+        }
+    }
+    </script>
 
     {{-- Modal Lunas Cepat --}}
     <template x-teleport="body">

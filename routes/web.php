@@ -75,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
     // ── Billing / Invoice (Admin + Kasir)
     Route::middleware('role:admin,kasir')->group(function () {
         Route::post('/invoice/bulk-generate-selected', [InvoiceController::class, 'bulkGenerateSelected'])->name('invoice.bulkGenerateSelected');
+        Route::post('/invoice/bulk-delete', [InvoiceController::class, 'bulkDelete'])->name('invoice.bulkDelete');
         Route::resource('invoice', InvoiceController::class);
         Route::post('/invoice/{id}/lunas', [InvoiceController::class, 'tandaiLunas'])->name('invoice.lunas');
         Route::get('/invoice/{id}/pdf', [InvoiceController::class, 'exportPdf'])->name('invoice.pdf');

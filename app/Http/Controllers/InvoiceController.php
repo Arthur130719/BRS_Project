@@ -155,6 +155,19 @@ class InvoiceController extends Controller
         $pdf = Pdf::loadView('invoice.pdf', compact('invoice'));
         return $pdf->download('invoice-' . $invoice->no_invoice . '.pdf');
     }
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'invoice_ids'   => 'required|array|min:1',
+            'invoice_ids.*' => 'exists:invoices,id',
+        ]);
+
+        $count = count($validated['invoice_ids']);
+        Invoice::whereIn('id', $validated['invoice_ids'])->delete();
+
+        return redirect()->route('invoice.index')->with('success', "Berhasil menghapus {$count} invoice secara massal.");
+    }
+
     public function bulkGenerateSelected(Request $request)
     {
         $validated = $request->validate([
