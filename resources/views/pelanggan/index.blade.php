@@ -561,9 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams(formData);
         params.set('_t', new Date().getTime());
         
-        tableContainer.style.opacity = '0.5';
-        tableContainer.style.pointerEvents = 'none';
-        
+        // Add loading spinner
         if (!document.getElementById('fetchSpinner')) {
             const spinner = document.createElement('div');
             spinner.id = 'fetchSpinner';
@@ -611,8 +609,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .finally(() => {
             if (signal.aborted) return;
-            tableContainer.style.opacity = '1';
-            tableContainer.style.pointerEvents = 'auto';
             const spinner = document.getElementById('fetchSpinner');
             if(spinner) spinner.remove();
         });
@@ -622,9 +618,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if(searchInput) {
         searchInput.addEventListener('input', function() {
-            // Kita BUKAN mereset filter di sini lagi. Biarkan filter tetap aktif.
-            // Jika pencarian tidak ketemu di filter tersebut, biarkan tampil "Tidak ada data".
-            debouncedFetch();
+            // Panggil fetch langsung tanpa jeda (karena sudah ada AbortController)
+            // Ini akan membuat pencarian terasa instan (live search sungguhan).
+            fetchPelanggans();
         });
     }
     if(statusFilter) statusFilter.addEventListener('change', debouncedFetch);
