@@ -72,6 +72,22 @@ services:
       - app
       - db
 
+  mikrotik_monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: netcore_mikrotik_monitor
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: php artisan mikrotik:monitor
+    networks:
+      - netcore
+    depends_on:
+      - app
+      - db
+
 networks:
   netcore:
     driver: bridge
