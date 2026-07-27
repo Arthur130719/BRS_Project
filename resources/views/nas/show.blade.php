@@ -42,10 +42,14 @@ if (!function_exists('formatBytes')) {
             <div class="card-title">Sesi PPPoE Aktif</div>
             <div class="card-subtitle">Menampilkan {{ count($activeSessions) }} pelanggan yang sedang terhubung ke router ini secara real-time.</div>
         </div>
+        <div class="toolbar-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="sessionSearch" placeholder="Cari nama secret, IP..." autocomplete="off">
+        </div>
     </div>
     
     <div class="card-body-flush table-wrap">
-        <table class="table">
+        <table class="table" id="sessionTable">
             <thead>
                 <tr>
                     <th style="width:50px;">#</th>
@@ -59,7 +63,7 @@ if (!function_exists('formatBytes')) {
             </thead>
             <tbody>
                 @forelse($activeSessions as $index => $session)
-                <tr>
+                <tr class="session-row">
                     <td class="mono-mute">{{ $index + 1 }}</td>
                     <td>
                         <strong style="color:var(--text-1);">{{ $session['name'] ?? '-' }}</strong>
@@ -109,4 +113,27 @@ if (!function_exists('formatBytes')) {
         </table>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('sessionSearch');
+        if (!searchInput) return;
+
+        searchInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#sessionTable tbody tr.session-row');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+@endpush
 @endsection
