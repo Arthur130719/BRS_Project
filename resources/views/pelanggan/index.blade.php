@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    const debouncedFetch = debounce(fetchPelanggans, 300);
+    const debouncedFetch = debounce(fetchPelanggans, 600);
 
     // Attach listeners for live search
     if(searchInput) {
@@ -628,9 +628,9 @@ document.addEventListener('DOMContentLoaded', function() {
             debouncedFetch();
         });
     }
-    if(statusFilter) statusFilter.addEventListener('change', fetchPelanggans);
-    if(paketFilter) paketFilter.addEventListener('change', fetchPelanggans);
-    if(nasFilter) nasFilter.addEventListener('change', fetchPelanggans);
+    if(statusFilter) statusFilter.addEventListener('change', debouncedFetch);
+    if(paketFilter) paketFilter.addEventListener('change', debouncedFetch);
+    if(nasFilter) nasFilter.addEventListener('change', debouncedFetch);
 
     // Prevent default form submit if JS is enabled
     if(filterForm) {
