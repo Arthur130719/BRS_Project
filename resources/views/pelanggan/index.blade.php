@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tableContainer.appendChild(spinner);
         }
         
-        const fetchUrl = `${filterForm.action.split('?')[0]}?${params.toString()}`;
+        const fetchUrl = `${window.location.pathname}?${params.toString()}`;
         console.log('Fetching:', fetchUrl);
 
         fetch(fetchUrl, {
