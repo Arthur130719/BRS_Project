@@ -57,6 +57,41 @@
             </template>
         </div>
 
+        {{-- BULK DELETE --}}
+        <div x-data="{ openBulkDelete: false }" style="display:inline-block; margin-right: 8px;">
+            <button type="button" @click="openBulkDelete = true" class="btn btn-danger" id="btnBulkDelete" style="display:none;">
+                <i class="fas fa-trash-alt"></i> Hapus (<span id="bulkDeleteCount">0</span>)
+            </button>
+            <template x-teleport="body">
+                <div x-show="openBulkDelete" class="modal-overlay" @click.self="openBulkDelete = false" style="display:none;" x-cloak>
+                    <div class="modal" @click.stop>
+                        <div class="modal-header">
+                            <span class="modal-title"><i class="fas fa-exclamation-triangle" style="color:var(--red);margin-right:8px;"></i>Konfirmasi Hapus Massal</span>
+                            <button class="modal-close" @click="openBulkDelete = false"><i class="fas fa-xmark"></i></button>
+                        </div>
+                        <form method="POST" action="{{ route('pelanggan.bulkDestroySelected') }}" id="bulkDeleteForm">
+                            @csrf
+                            <div id="hiddenBulkDeleteInputs"></div>
+                            <div class="modal-body">
+                                <div style="padding:12px; background:rgba(239,68,68,0.1); color:var(--red); border:1px solid rgba(239,68,68,0.2); border-radius:6px; font-size:14px; margin-bottom: 15px;">
+                                    <strong>Peringatan Berbahaya!</strong><br><br>
+                                    Anda akan menghapus <strong><span id="bulkDeleteCountModal">0</span> pelanggan</strong> secara permanen.
+                                    Tindakan ini juga akan menghapus akun PPPoE mereka dari MikroTik. Data yang dihapus tidak dapat dikembalikan.
+                                </div>
+                                <p>Apakah Anda benar-benar yakin ingin melanjutkan?</p>
+                            </div>
+                            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+                                <button type="button" class="btn btn-ghost" @click="openBulkDelete = false">Batal</button>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt"></i> Ya, Hapus Permanen
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </template>
+        </div>
+
         <div x-data="{ openImport: false }" style="display:inline-block; margin-right: 8px;">
             <button @click="openImport = true" class="btn btn-ghost">
                 <i class="fas fa-file-import"></i> Import .rsc
@@ -566,19 +601,33 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateBulkGenerate() {
     const checked = document.querySelectorAll('.row-checkbox:checked');
     const count = checked.length;
+    
+    // Bulk Invoice elements
     const btn = document.getElementById('btnBulkInvoice');
     const badge = document.getElementById('bulkCount');
     const modalBadge = document.getElementById('bulkCountModal');
     const hiddenInputsContainer = document.getElementById('hiddenBulkInputs');
+    
+    // Bulk Delete elements
+    const btnDel = document.getElementById('btnBulkDelete');
+    const badgeDel = document.getElementById('bulkDeleteCount');
+    const modalBadgeDel = document.getElementById('bulkDeleteCountModal');
+    const hiddenDelInputsContainer = document.getElementById('hiddenBulkDeleteInputs');
+    
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     
     // Update button visibility and badge
     if (count > 0) {
-        btn.style.display = 'inline-block';
-        badge.textContent = count;
+        if (btn) btn.style.display = 'inline-block';
+        if (btnDel) btnDel.style.display = 'inline-block';
+        
+        if (badge) badge.textContent = count;
         if (modalBadge) modalBadge.textContent = count;
+        if (badgeDel) badgeDel.textContent = count;
+        if (modalBadgeDel) modalBadgeDel.textContent = count;
     } else {
-        btn.style.display = 'none';
+        if (btn) btn.style.display = 'none';
+        if (btnDel) btnDel.style.display = 'none';
     }
     
     // Check/Uncheck "Select All" dynamically
@@ -590,13 +639,24 @@ function updateBulkGenerate() {
     }
 
     // Populate hidden form inputs
-    hiddenInputsContainer.innerHTML = '';
+    if (hiddenInputsContainer) hiddenInputsContainer.innerHTML = '';
+    if (hiddenDelInputsContainer) hiddenDelInputsContainer.innerHTML = '';
+    
     checked.forEach(cb => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'pelanggan_ids[]';
-        input.value = cb.value;
-        hiddenInputsContainer.appendChild(input);
+        if (hiddenInputsContainer) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'pelanggan_ids[]';
+            input.value = cb.value;
+            hiddenInputsContainer.appendChild(input);
+        }
+        if (hiddenDelInputsContainer) {
+            const inputDel = document.createElement('input');
+            inputDel.type = 'hidden';
+            inputDel.name = 'pelanggan_ids[]';
+            inputDel.value = cb.value;
+            hiddenDelInputsContainer.appendChild(inputDel);
+        }
     });
 }
 

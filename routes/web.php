@@ -39,6 +39,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Pelanggan (Admin: full CRUD | Kasir: full CRUD | Teknisi: read)
     Route::post('/pelanggan/import-rsc', [PelangganController::class, 'importRsc'])->name('pelanggan.importRsc');
+    Route::post('/pelanggan/bulk-destroy', [PelangganController::class, 'bulkDestroySelected'])->name('pelanggan.bulkDestroySelected');
     Route::resource('pelanggan', PelangganController::class);
     Route::post('/pelanggan/{id}/suspend', [PelangganController::class, 'suspend'])->name('pelanggan.suspend');
     Route::post('/pelanggan/{id}/aktifkan', [PelangganController::class, 'aktifkan'])->name('pelanggan.aktifkan');

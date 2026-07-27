@@ -233,6 +233,47 @@ class PelangganController extends Controller
         return redirect()->route('pelanggan.index')->with('success', 'Pelanggan berhasil dihapus dari web dan MikroTik.');
     }
 
+    public function bulkDestroySelected(Request $request)
+    {
+        if (!auth()->user()->hasRole(['admin', 'kasir'])) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $request->validate([
+            'pelanggan_ids' => 'required|array|min:1',
+            'pelanggan_ids.*' => 'exists:pelanggans,id'
+        ]);
+
+        $pelanggans = Pelanggan::with('nas')->whereIn('id', $request->pelanggan_ids)->get();
+        $berhasilMikrotik = 0;
+        $gagalMikrotik = 0;
+
+        foreach ($pelanggans as $pelanggan) {
+            $nas = $pelanggan->nas;
+            $username = $pelanggan->username_pppoe;
+
+            // Hapus dari Web
+            $pelanggan->delete();
+
+            // Hapus dari MikroTik
+            if ($nas) {
+                $success = $this->mikrotikService->removePppoeUser($nas, $username);
+                if ($success) {
+                    $berhasilMikrotik++;
+                } else {
+                    $gagalMikrotik++;
+                }
+            }
+        }
+
+        $msg = count($pelanggans) . ' pelanggan berhasil dihapus dari web.';
+        if ($berhasilMikrotik > 0 || $gagalMikrotik > 0) {
+            $msg .= " Sinkronisasi MikroTik: $berhasilMikrotik berhasil dihapus, $gagalMikrotik gagal dihapus.";
+        }
+
+        return redirect()->route('pelanggan.index')->with($gagalMikrotik > 0 ? 'warning' : 'success', $msg);
+    }
+
     public function suspend(int $id)
     {
         $pelanggan = Pelanggan::findOrFail($id);
