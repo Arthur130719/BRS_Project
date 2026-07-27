@@ -360,7 +360,7 @@
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 {{-- Search --}}
                 <div class="toolbar-search">
-                    <i class="fas fa-magnifying-glass"></i>
+                    <i class="fas fa-magnifying-glass" id="searchIcon"></i>
                     <input type="text"
                            name="search"
                            id="searchInput"
@@ -561,18 +561,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams(formData);
         params.set('_t', new Date().getTime());
         
-        // Add loading spinner
-        if (!document.getElementById('fetchSpinner')) {
-            const spinner = document.createElement('div');
-            spinner.id = 'fetchSpinner';
-            spinner.innerHTML = '<i class="fas fa-spinner fa-spin fa-3x" style="color:#60a5fa;"></i>';
-            spinner.style.position = 'absolute';
-            spinner.style.top = '50%';
-            spinner.style.left = '50%';
-            spinner.style.transform = 'translate(-50%, -50%)';
-            spinner.style.zIndex = '10';
-            tableContainer.style.position = 'relative';
-            tableContainer.appendChild(spinner);
+        // Ubah icon pencarian menjadi spinner
+        const searchIcon = document.getElementById('searchIcon');
+        if (searchIcon) {
+            searchIcon.className = 'fas fa-spinner fa-spin';
+            searchIcon.style.color = '#60a5fa';
         }
         
         const fetchUrl = `${window.location.pathname}?${params.toString()}`;
@@ -609,8 +602,11 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .finally(() => {
             if (signal.aborted) return;
-            const spinner = document.getElementById('fetchSpinner');
-            if(spinner) spinner.remove();
+            const searchIcon = document.getElementById('searchIcon');
+            if (searchIcon) {
+                searchIcon.className = 'fas fa-magnifying-glass';
+                searchIcon.style.color = '';
+            }
         });
     };
 
