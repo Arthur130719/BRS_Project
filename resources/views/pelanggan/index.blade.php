@@ -604,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             if (error.name === 'AbortError') return;
             console.error('AJAX Error:', error);
-            alert('Gagal memuat data pelanggan. Silakan refresh halaman.');
+            alert('ERROR_V2: Gagal memuat data pelanggan. Error: ' + error.message);
         })
         .finally(() => {
             if (signal.aborted) return;
