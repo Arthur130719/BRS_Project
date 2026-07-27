@@ -180,6 +180,7 @@
         $cpu = $nas->cpu_pct ?? 0;
         $mem = $nas->mem_pct ?? 0;
     @endphp
+    <a href="{{ route('nas.show', $nas->id) }}" style="text-decoration:none; color:inherit; display:block;">
     <div class="nas-card" x-data="nasCard({{ $nas->id }}, {{ $cpu }}, {{ $mem }}, '{{ $nas->uptime ?? 'N/A' }}', {{ $nas->pelanggans_count ?? $nas->pelanggan_count ?? 0 }}, '{{ $nas->status ?? 'offline' }}')" x-init="startPolling()">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
             <div class="nas-kode">{{ $nas->kode }}</div>
@@ -224,6 +225,7 @@
             </div>
         </div>
     </div>
+    </a>
     @endforeach
 </div>
 @else

@@ -13,6 +13,14 @@ class NasController extends Controller
         return view('nas.index', compact('nasList'));
     }
 
+    public function show(Nas $nas, \App\Services\MikrotikService $mikrotikService)
+    {
+        // Get all active PPPoE sessions from Mikrotik
+        $activeSessions = $mikrotikService->getAllActiveSessions($nas);
+        
+        return view('nas.show', compact('nas', 'activeSessions'));
+    }
+
     public function stats(Nas $nas, \App\Services\MikrotikService $mikrotikService)
     {
         $stats = $mikrotikService->getNasStats($nas);
