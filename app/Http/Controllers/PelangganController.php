@@ -353,7 +353,7 @@ class PelangganController extends Controller
     public function importRsc(Request $request)
     {
         $request->validate([
-            'nas_id' => 'required|exists:nas,id',
+            'nas_id' => 'nullable|exists:nas,id',
             'rsc_file' => 'required|file|mimes:txt,rsc|max:2048',
         ]);
 
@@ -363,6 +363,42 @@ class PelangganController extends Controller
         // Normalize line continuations (backslash followed by newline)
         $content = preg_replace('/\\\\\r?\n\s*/', '', $content);
         $lines = explode("\n", $content);
+
+        // Cari identity dari .rsc
+        $identity = null;
+        $inIdentitySection = false;
+        foreach ($lines as $line) {
+            $line = trim($line);
+            // Cek apakah satu baris "/system identity set name=..."
+            if (strpos($line, '/system identity set name=') === 0) {
+                if (preg_match('/set name="?([^"\s]+)"?/', $line, $matches)) {
+                    $identity = $matches[1];
+                }
+            } elseif (strpos($line, '/system identity') === 0) {
+                $inIdentitySection = true;
+            } elseif ($inIdentitySection && strpos($line, 'set name=') === 0) {
+                if (preg_match('/set name="?([^"\s]+)"?/', $line, $matches)) {
+                    $identity = $matches[1];
+                }
+                $inIdentitySection = false;
+            } elseif (strpos($line, '/') === 0) {
+                $inIdentitySection = false; // Keluar dari section jika ketemu menu lain
+            }
+        }
+
+        $nas_id = $request->nas_id;
+        
+        if ($identity) {
+            // Coba cari NAS berdasarkan nama identity
+            $foundNas = \App\Models\Nas::where('nama', $identity)->first();
+            if ($foundNas) {
+                $nas_id = $foundNas->id;
+            }
+        }
+
+        if (!$nas_id) {
+            return back()->with('error', 'Gagal Import: NAS Router tidak valid. Tidak ada Router dengan nama "' . ($identity ?: 'Tidak Ditemukan') . '" di sistem, dan tidak ada Router cadangan yang dipilih.');
+        }
 
         // Map existing paket (lowercase for matching)
         $pakets = \App\Models\Paket::all()->keyBy(function ($paket) {
@@ -412,7 +448,7 @@ class PelangganController extends Controller
                         'username_pppoe' => $name,
                         'password_pppoe' => $password,
                         'nama'           => ucwords(str_replace(['.', '_', '-'], ' ', $name)),
-                        'nas_id'         => $request->nas_id,
+                        'nas_id'         => $nas_id,
                         'paket_id'       => $paket_id,
                         'status'         => 'active',
                         'tgl_aktif'      => now(),

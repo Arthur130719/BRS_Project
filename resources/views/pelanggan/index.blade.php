@@ -30,14 +30,14 @@
                             @csrf
                             <div class="modal-body">
                                 <div class="form-group">
-                                    <label class="form-label">Router NAS <span style="color:var(--red)">*</span></label>
-                                    <select name="nas_id" class="form-control" required>
-                                        <option value="">-- Pilih Router --</option>
+                                    <label class="form-label">Router NAS (Opsional)</label>
+                                    <select name="nas_id" class="form-control">
+                                        <option value="">-- Deteksi Otomatis dari .rsc --</option>
                                         @foreach(\App\Models\Nas::all() as $nas)
                                             <option value="{{ $nas->id }}">{{ $nas->nama }} ({{ $nas->ip_address }})</option>
                                         @endforeach
                                     </select>
-                                    <small style="color:var(--text-4); display:block; margin-top:4px;">Pilih Router tempat pelanggan-pelanggan ini berada.</small>
+                                    <small style="color:var(--text-4); display:block; margin-top:4px;">Pilih Router HANYA JIKA nama (System Identity) router di file .rsc berbeda dengan yang ada di web.</small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">File .rsc Backup <span style="color:var(--red)">*</span></label>
