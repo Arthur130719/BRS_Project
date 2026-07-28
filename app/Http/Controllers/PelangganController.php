@@ -68,7 +68,7 @@ class PelangganController extends Controller
         $pakets     = Paket::where('is_active', true)->get();
         $nases      = \App\Models\Nas::all();
 
-        $cachedSessions = \Illuminate\Support\Facades\Cache::get('mikrotik_live_sessions', []);
+        $cachedSessions = \Illuminate\Support\Facades\Cache::store('file')->get('mikrotik_live_sessions', []);
         $liveIps = [];
         foreach ($cachedSessions as $session) {
             if (isset($session['name']) && isset($session['address'])) {
@@ -385,7 +385,7 @@ class PelangganController extends Controller
     }
     public function liveSession(Pelanggan $pelanggan)
     {
-        $cachedSessions = \Illuminate\Support\Facades\Cache::get('mikrotik_live_sessions', []);
+        $cachedSessions = \Illuminate\Support\Facades\Cache::store('file')->get('mikrotik_live_sessions', []);
         
         foreach ($cachedSessions as $session) {
             if (isset($session['name']) && $session['name'] === $pelanggan->username_pppoe) {
