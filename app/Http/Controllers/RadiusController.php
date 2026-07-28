@@ -19,7 +19,7 @@ class RadiusController extends Controller
     public function index(Request $request)
     {
         // Ambil data live dari Cache (yang disuplai oleh daemon php artisan mikrotik:monitor)
-        $cachedSessions = \Illuminate\Support\Facades\Cache::get('mikrotik_live_sessions', []);
+        $cachedSessions = \Illuminate\Support\Facades\Cache::store('file')->get('mikrotik_live_sessions', []);
         
         $allSessions = [];
         $totalDlBytes = 0;
