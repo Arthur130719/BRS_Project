@@ -118,11 +118,11 @@ class MikrotikMonitor extends Command
                 }
             }
             
-            // Simpan data gabungan semua router ke Cache (Gunakan 'file' agar tidak membebani database/binlog)
-            Cache::store('file')->put('mikrotik_live_sessions', $allSessions, 10);
+            // Simpan data gabungan semua router ke Cache selama 35 detik (Gunakan 'file' agar tidak membebani database/binlog)
+            Cache::store('file')->put('mikrotik_live_sessions', $allSessions, 35);
 
-            // Beri jeda 1 detik sebelum tarik data lagi
-            sleep(1);
+            // Beri jeda 30 detik agar CPU MikroTik tidak kelelahan (mencegah bandwidth drop)
+            sleep(30);
         }
     }
 }
