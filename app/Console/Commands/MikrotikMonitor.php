@@ -31,7 +31,8 @@ class MikrotikMonitor extends Command
     {
         $nasList = Nas::where('status', 'online')->get();
         if ($nasList->isEmpty()) {
-            $this->error("Tidak ada router MikroTik (NAS) yang berstatus online.");
+            $this->error("Tidak ada router MikroTik (NAS) yang berstatus online. Menunggu 60 detik sebelum dicoba ulang oleh Docker...");
+            sleep(60);
             return;
         }
 
@@ -49,7 +50,8 @@ class MikrotikMonitor extends Command
         }
 
         if (empty($apis)) {
-            $this->error("Gagal terhubung ke semua router MikroTik.");
+            $this->error("Gagal terhubung ke semua router MikroTik. Menunggu 60 detik sebelum dicoba ulang oleh Docker...");
+            sleep(60);
             return;
         }
         
