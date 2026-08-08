@@ -92,6 +92,124 @@
     </div>
 </div>
 
+{{-- ── Summary Total Pendapatan ── --}}
+<div style="margin-bottom:20px;">
+
+    @php
+        // Helper: format Rupiah
+        $fmt = fn($n) => 'Rp ' . number_format($n, 0, ',', '.');
+
+        // Kelompokkan totalPerBank menjadi label yang rapi
+        $bankGroups = [];
+        foreach ($totalPerBank as $row) {
+            $metode = $row->metode;
+            $label  = match(true) {
+                str_starts_with($metode, 'transfer_bca')     => 'BCA',
+                str_starts_with($metode, 'transfer_bri')     => 'BRI',
+                str_starts_with($metode, 'transfer_mandiri') => 'Mandiri',
+                str_starts_with($metode, 'transfer_bni')     => 'BNI',
+                $metode === 'Transfer Lain'                  => 'Lainnya',
+                default => ucwords(str_replace(['transfer_', '_'], ['', ' '], $metode)),
+            };
+            // Jika metode dari rekening dinamis (misal "Transfer BCA (a.n ...)")
+            if (str_starts_with($metode, 'Transfer ')) {
+                $label = explode(' (', ltrim($metode, 'Transfer '))[0];
+                $label = ltrim($label, 'Transfer ');
+                // Ambil nama bank saja
+                $parts = explode(' ', $metode, 3);
+                $label = $parts[1] ?? $metode;
+            }
+            if (!isset($bankGroups[$label])) {
+                $bankGroups[$label] = 0;
+            }
+            $bankGroups[$label] += $row->total;
+        }
+    @endphp
+
+    {{-- Row: Cash + Transfer Cards --}}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px;">
+
+        {{-- Total Cash --}}
+        <div style="background:var(--bg-surface);border:1px solid rgba(16,185,129,0.3);border-left:4px solid var(--green);border-radius:var(--radius-xl);padding:18px 20px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--green);">
+                    <i class="fas fa-money-bill-wave" style="margin-right:5px;"></i>Total Cash
+                </div>
+                <div style="width:32px;height:32px;border-radius:50%;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-money-bill" style="color:var(--green);font-size:13px;"></i>
+                </div>
+            </div>
+            <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);">{{ $fmt($totalCash) }}</div>
+            <div style="font-size:11px;color:var(--text-4);">Pembayaran tunai langsung</div>
+        </div>
+
+        {{-- Total Transfer per Bank --}}
+        @foreach($bankGroups as $bankLabel => $bankTotal)
+        @php
+            $bankLow = strtolower($bankLabel);
+            $bankColor = match(true) {
+                str_contains($bankLow, 'bca')     => '#0066AE',
+                str_contains($bankLow, 'mandiri') => '#F2A900',
+                str_contains($bankLow, 'bri')     => '#00529C',
+                str_contains($bankLow, 'bni')     => '#F15A23',
+                str_contains($bankLow, 'dana')    => '#118EEA',
+                str_contains($bankLow, 'gopay')   => '#00A550',
+                default                           => 'var(--sky)',
+            };
+        @endphp
+        <div style="background:var(--bg-surface);border:1px solid rgba(14,165,233,0.25);border-left:4px solid {{ $bankColor }};border-radius:var(--radius-xl);padding:18px 20px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:{{ $bankColor }};">
+                    <i class="fas fa-building-columns" style="margin-right:5px;"></i>Transfer {{ $bankLabel }}
+                </div>
+                <div style="width:32px;height:32px;border-radius:50%;background:rgba(14,165,233,0.1);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-building-columns" style="color:{{ $bankColor }};font-size:13px;"></i>
+                </div>
+            </div>
+            <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);">{{ $fmt($bankTotal) }}</div>
+            <div style="font-size:11px;color:var(--text-4);">Pembayaran via rekening {{ $bankLabel }}</div>
+        </div>
+        @endforeach
+
+    </div>
+
+    {{-- Row: Total Transfer + Grand Total --}}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+        {{-- Total Semua Transfer --}}
+        <div style="background:var(--bg-surface);border:1px solid rgba(14,165,233,0.3);border-left:4px solid var(--sky);border-radius:var(--radius-xl);padding:18px 20px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--sky);">
+                    <i class="fas fa-arrows-left-right" style="margin-right:5px;"></i>Total Semua Transfer
+                </div>
+                <div style="width:32px;height:32px;border-radius:50%;background:rgba(14,165,233,0.12);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-building-columns" style="color:var(--sky);font-size:13px;"></i>
+                </div>
+            </div>
+            <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);">{{ $fmt($totalTransferAll) }}</div>
+            <div style="font-size:11px;color:var(--text-4);">Gabungan semua rekening bank</div>
+        </div>
+
+        {{-- Grand Total --}}
+        <div style="background:linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(139,92,246,0.15) 100%);border:1px solid rgba(99,102,241,0.4);border-left:4px solid var(--indigo);border-radius:var(--radius-xl);padding:18px 20px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-10px;bottom:-10px;font-size:60px;color:rgba(99,102,241,0.06);pointer-events:none;">
+                <i class="fas fa-sack-dollar"></i>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--indigo);">
+                    <i class="fas fa-trophy" style="margin-right:5px;"></i>Grand Total Pendapatan
+                </div>
+                <div style="width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,0.2);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-sack-dollar" style="color:var(--indigo);font-size:13px;"></i>
+                </div>
+            </div>
+            <div class="mono" style="font-size:26px;font-weight:700;color:var(--text-1);letter-spacing:-0.5px;">{{ $fmt($grandTotal) }}</div>
+            <div style="font-size:11px;color:var(--text-4);">Cash + Semua Transfer</div>
+        </div>
+
+    </div>
+</div>
+
 {{-- ── Pembayaran Table ── --}}
 <div class="card">
     <div class="card-header">

@@ -10,10 +10,43 @@ class PembayaranController extends Controller
 {
     public function index(Request $request)
     {
-        $pembayarans = Pembayaran::with(['invoice.pelanggan', 'user'])
-            ->latest()
-            ->paginate(20);
-        return view('pembayaran.index', compact('pembayarans'));
+        $query = Pembayaran::with(['invoice.pelanggan', 'user']);
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->whereHas('invoice', function ($q) use ($s) {
+                $q->where('no_invoice', 'like', "%$s%")
+                  ->orWhereHas('pelanggan', fn($q2) => $q2->where('nama', 'like', "%$s%"));
+            });
+        }
+
+        if ($request->filled('metode')) {
+            $query->where('metode', $request->metode);
+        }
+
+        // ── Summary totals (tanpa filter, dari seluruh data) ──
+        $summaryQuery = Pembayaran::query();
+        $totalCash        = (clone $summaryQuery)->where('metode', 'cash')->sum('nominal');
+        $totalTransferAll = (clone $summaryQuery)->where('metode', '!=', 'cash')->sum('nominal');
+        $grandTotal       = (clone $summaryQuery)->sum('nominal');
+
+        // Total per rekening bank (grouped by metode label)
+        $totalPerBank = (clone $summaryQuery)
+            ->where('metode', '!=', 'cash')
+            ->selectRaw('metode, nama_bank, SUM(nominal) as total')
+            ->groupBy('metode', 'nama_bank')
+            ->orderBy('metode')
+            ->get();
+
+        $pembayarans = $query->latest()->paginate(20)->withQueryString();
+
+        return view('pembayaran.index', compact(
+            'pembayarans',
+            'totalCash',
+            'totalTransferAll',
+            'grandTotal',
+            'totalPerBank'
+        ));
     }
 
     public function create(Request $request)
