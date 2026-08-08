@@ -355,6 +355,7 @@
     <form method="GET" action="{{ route('pelanggan.index') }}" id="filterForm">
         <input type="hidden" name="sort_by" id="sort_by" value="{{ request('sort_by', 'created_at') }}">
         <input type="hidden" name="sort_dir" id="sort_dir" value="{{ request('sort_dir', 'desc') }}">
+        <input type="hidden" name="page" id="currentPage" value="{{ request('page', 1) }}">
         
         <div class="table-toolbar">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -450,6 +451,34 @@ document.addEventListener('DOMContentLoaded', function() {
 @endif
 
 @push('scripts')
+<style>
+/* Pagination responsive — mobile */
+.pagination-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 0 4px;
+}
+.pagination-wrapper nav {
+    display: flex;
+    justify-content: center;
+    min-width: max-content;
+}
+.pagination-wrapper .flex {
+    flex-wrap: nowrap !important;
+    gap: 2px;
+}
+.pagination-wrapper span[aria-current="page"] span,
+.pagination-wrapper a {
+    white-space: nowrap;
+    min-width: 36px;
+    text-align: center;
+}
+@media (max-width: 640px) {
+    .pagination-wrapper nav {
+        justify-content: flex-start;
+    }
+}
+</style>
 <script>
 function updateBulkGenerate() {
     const checked = document.querySelectorAll('.row-checkbox:checked');
@@ -550,7 +579,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentFetchController = null;
 
-    const fetchPelanggans = (isAutoRefresh = false) => {
+    // ── Fetch dengan dukungan halaman & query string ──
+    const fetchPelanggans = (isAutoRefresh = false, pageOverride = null) => {
         if (currentFetchController) {
             currentFetchController.abort();
         }
@@ -559,6 +589,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(filterForm);
         const params = new URLSearchParams(formData);
+
+        // Gunakan pageOverride jika ada, kalau tidak ambil dari hidden input
+        const pageInput = document.getElementById('currentPage');
+        if (pageOverride !== null) {
+            params.set('page', pageOverride);
+            if (pageInput) pageInput.value = pageOverride;
+        } else {
+            params.set('page', pageInput ? pageInput.value : 1);
+        }
+
         params.set('_t', new Date().getTime());
         
         // Ubah icon pencarian menjadi spinner hanya jika bukan dari auto-refresh
@@ -571,7 +611,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const fetchUrl = `${window.location.pathname}?${params.toString()}`;
-        console.log('Fetching:', fetchUrl);
 
         fetch(fetchUrl, {
             signal: signal,
@@ -583,24 +622,35 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(async response => {
             if (!response.ok) {
                 const text = await response.text().catch(() => '');
-                throw new Error(`HTTP ${response.status} ${response.statusText} - ${text.substring(0, 100)}`);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
-            if(data.html) {
+            if (data.html !== undefined) {
                 tableContainer.innerHTML = data.html;
                 updateBulkGenerate();
                 attachSortListeners();
+                attachPaginationListeners(); // ← intercept link pagination baru
                 
                 const totalText = document.querySelector('.toolbar-right .mono-mute');
-                if (totalText) totalText.textContent = data.total + ' data';
+                if (totalText) totalText.textContent = (data.total ?? '') + ' data';
+
+                // Update URL di address bar tanpa reload
+                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                history.replaceState(null, '', newUrl);
             }
         })
         .catch(error => {
             if (error.name === 'AbortError') return;
             console.error('AJAX Error:', error);
-            alert('ERROR_V2: Gagal memuat data pelanggan. Error: ' + error.message);
+            // Tampilkan notif ringan di bawah tabel, bukan alert pop-up
+            const errDiv = document.getElementById('ajaxErrorMsg');
+            if (errDiv) {
+                errDiv.textContent = 'Gagal memuat data: ' + error.message;
+                errDiv.style.display = 'block';
+                setTimeout(() => { errDiv.style.display = 'none'; }, 5000);
+            }
         })
         .finally(() => {
             if (signal.aborted) return;
@@ -614,16 +664,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    if(searchInput) {
-        searchInput.addEventListener('input', function() {
-            // Panggil fetch langsung tanpa jeda (karena sudah ada AbortController)
-            // Ini akan membuat pencarian terasa instan (live search sungguhan).
-            fetchPelanggans(false);
+    // ── Intercept klik link pagination agar tidak full reload ──
+    function attachPaginationListeners() {
+        document.querySelectorAll('.pagination-wrapper a[href]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = new URL(this.href);
+                const page = url.searchParams.get('page') || 1;
+                fetchPelanggans(false, parseInt(page));
+            });
         });
     }
-    if(statusFilter) statusFilter.addEventListener('change', () => fetchPelanggans(false));
-    if(paketFilter) paketFilter.addEventListener('change', () => fetchPelanggans(false));
-    if(nasFilter) nasFilter.addEventListener('change', () => fetchPelanggans(false));
+
+    if(searchInput) {
+        searchInput.addEventListener('input', function() {
+            // Reset ke halaman 1 setiap kali search berubah
+            const pageInput = document.getElementById('currentPage');
+            if (pageInput) pageInput.value = 1;
+            fetchPelanggans(false, 1);
+        });
+    }
+    // Reset ke hal. 1 juga saat filter berubah
+    if(statusFilter) statusFilter.addEventListener('change', () => { const p = document.getElementById('currentPage'); if(p) p.value=1; fetchPelanggans(false, 1); });
+    if(paketFilter)  paketFilter.addEventListener('change',  () => { const p = document.getElementById('currentPage'); if(p) p.value=1; fetchPelanggans(false, 1); });
+    if(nasFilter)    nasFilter.addEventListener('change',    () => { const p = document.getElementById('currentPage'); if(p) p.value=1; fetchPelanggans(false, 1); });
 
     if(filterForm) {
         filterForm.addEventListener('submit', function(e) {
@@ -653,6 +717,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     attachSortListeners();
+    attachPaginationListeners();
+
+    // Pesan error ringan (tidak pakai alert pop-up)
+    if (!document.getElementById('ajaxErrorMsg')) {
+        const errDiv = document.createElement('div');
+        errDiv.id = 'ajaxErrorMsg';
+        errDiv.style.cssText = 'display:none;background:rgba(239,68,68,0.12);color:#f87171;padding:8px 14px;border-radius:6px;font-size:12px;margin-top:8px;text-align:center;';
+        tableContainer.parentNode.insertBefore(errDiv, tableContainer.nextSibling);
+    }
 
     // Auto-refresh data pelanggan setiap 10 detik
     setInterval(function() {
@@ -671,9 +744,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isModalOpen) return;
 
-        // Auto-refresh: Jangan tampilkan spinner agar tidak mengganggu (stealth refresh)
-        fetchPelanggans(true);
+        // Auto-refresh: pakai halaman yang sedang aktif, bukan reset ke 1
+        fetchPelanggans(true, null);
     }, 10000);
+
+    // Kalau ada ?page= di URL saat pertama load, pastikan hidden input sinkron
+    const urlPage = new URLSearchParams(window.location.search).get('page');
+    const pageInput = document.getElementById('currentPage');
+    if (urlPage && pageInput) pageInput.value = urlPage;
 });
 </script>
 @endpush

@@ -175,5 +175,8 @@
 
 {{-- ── Pagination ── --}}
 @if($pelanggans->hasPages())
-    {{ $pelanggans->appends(request()->except('page'))->links() }}
+    <div class="pagination-wrapper">
+        {{ $pelanggans->appends(request()->except('page'))->links() }}
+    </div>
 @endif
+
