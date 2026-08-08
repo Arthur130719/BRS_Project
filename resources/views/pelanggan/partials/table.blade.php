@@ -17,7 +17,7 @@
             @forelse($pelanggans as $i => $p)
             <tr>
                 {{-- Checkbox --}}
-                <td><input type="checkbox" class="row-checkbox" value="{{ $p->id }}" onchange="updateBulkGenerate()"></td>
+                <td><input type="checkbox" class="row-checkbox" value="{{ $p->id }}" data-nama="{{ $p->nama }}" onchange="updateBulkGenerate()"></td>
 
                 {{-- No --}}
                 <td class="mono-mute">{{ $pelanggans->firstItem() + $i }}</td>

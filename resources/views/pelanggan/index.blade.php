@@ -23,7 +23,7 @@
             </button>
             <template x-teleport="body">
                 <div x-show="openBulkInvoice" class="modal-overlay" @click.self="openBulkInvoice = false" style="display:none;" x-cloak>
-                    <div class="modal" @click.stop>
+                    <div class="modal modal-lg" @click.stop>
                         <div class="modal-header">
                             <span class="modal-title"><i class="fas fa-file-invoice-dollar" style="color:var(--sky);margin-right:8px;"></i>Buat Tagihan Massal</span>
                             <button class="modal-close" @click="openBulkInvoice = false"><i class="fas fa-xmark"></i></button>
@@ -32,10 +32,22 @@
                             @csrf
                             <div id="hiddenBulkInputs"></div>
                             <div class="modal-body">
+                                {{-- Info --}}
                                 <div style="padding:12px; background:var(--sky-dim); color:var(--sky); border:1px solid rgba(14,165,233,0.2); border-radius:6px; font-size:12px; margin-bottom: 15px;">
                                     <i class="fas fa-info-circle" style="margin-right:4px;"></i>
                                     Tagihan akan dibuat untuk <strong><span id="bulkCountModal">0</span> pelanggan</strong> yang dicentang. Pelanggan yang sudah memiliki tagihan Unpaid atau tidak punya paket akan dilewati otomatis.
                                 </div>
+
+                                {{-- Daftar nama pelanggan yang dicentang --}}
+                                <div style="margin-bottom:16px;">
+                                    <div style="font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-4);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+                                        <i class="fas fa-list-check" style="margin-right:4px;"></i> Pelanggan yang Dipilih
+                                    </div>
+                                    <div id="selectedNamesList" style="max-height:160px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;">
+                                        {{-- Diisi oleh JS --}}
+                                    </div>
+                                </div>
+
                                 <div class="form-group">
                                     <label class="form-label">Periode Tagihan <span style="color:var(--red)">*</span></label>
                                     <input type="text" name="periode" class="form-control" placeholder="Contoh: Agustus 2026" required>
@@ -56,6 +68,7 @@
                 </div>
             </template>
         </div>
+
 
         {{-- BULK DELETE --}}
         <div x-data="{ openBulkDelete: false }" style="display:inline-block; margin-right: 8px;">
@@ -478,119 +491,157 @@ document.addEventListener('DOMContentLoaded', function() {
         justify-content: flex-start;
     }
 }
+/* Chip nama pelanggan di modal */
+.selected-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    background: rgba(14,165,233,0.12);
+    color: var(--sky);
+    border: 1px solid rgba(14,165,233,0.25);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.selected-chip button {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.7;
+    line-height: 1;
+}
+.selected-chip button:hover { opacity: 1; }
 </style>
 <script>
-function updateBulkGenerate() {
-    const checked = document.querySelectorAll('.row-checkbox:checked');
-    const count = checked.length;
-    
-    // Bulk Invoice elements
-    const btn = document.getElementById('btnBulkInvoice');
-    const badge = document.getElementById('bulkCount');
-    const modalBadge = document.getElementById('bulkCountModal');
-    const hiddenInputsContainer = document.getElementById('hiddenBulkInputs');
-    
-    // Bulk Delete elements
+// ═══════════════════════════════════════════════════════════
+//  PERSISTENT SELECTION MAP
+//  Key: pelanggan_id (string), Value: nama (string)
+//  Bertahan lintas halaman, pencarian, sort, dan auto-refresh
+// ═══════════════════════════════════════════════════════════
+const selectedPelanggans = new Map(); // { id => nama }
+
+function syncCheckboxesToDOM() {
+    // Restore centang pada baris yang visible di DOM sesuai Map
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.checked = selectedPelanggans.has(cb.value);
+    });
+    // Update selectAll header
+    const allCbs = document.querySelectorAll('.row-checkbox');
+    const selectAll = document.getElementById('selectAllCheckbox');
+    if (selectAll) {
+        selectAll.checked = allCbs.length > 0 && [...allCbs].every(cb => selectedPelanggans.has(cb.value));
+        selectAll.indeterminate = !selectAll.checked && [...allCbs].some(cb => selectedPelanggans.has(cb.value));
+    }
+}
+
+function refreshBulkUI() {
+    const count = selectedPelanggans.size;
+
+    // — Tombol & badge —
+    const btn    = document.getElementById('btnBulkInvoice');
     const btnDel = document.getElementById('btnBulkDelete');
+    const badge  = document.getElementById('bulkCount');
     const badgeDel = document.getElementById('bulkDeleteCount');
+    const modalBadge    = document.getElementById('bulkCountModal');
     const modalBadgeDel = document.getElementById('bulkDeleteCountModal');
-    const hiddenDelInputsContainer = document.getElementById('hiddenBulkDeleteInputs');
-    
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    
-    // Update button visibility and badge
+
     if (count > 0) {
-        if (btn) btn.style.display = 'inline-block';
+        if (btn)    btn.style.display    = 'inline-block';
         if (btnDel) btnDel.style.display = 'inline-block';
-        
-        if (badge) badge.textContent = count;
-        if (modalBadge) modalBadge.textContent = count;
-        if (badgeDel) badgeDel.textContent = count;
-        if (modalBadgeDel) modalBadgeDel.textContent = count;
     } else {
-        if (btn) btn.style.display = 'none';
+        if (btn)    btn.style.display    = 'none';
         if (btnDel) btnDel.style.display = 'none';
     }
-    
-    // Check/Uncheck "Select All" dynamically
-    const allCheckboxes = document.querySelectorAll('.row-checkbox');
-    if (allCheckboxes.length > 0 && count === allCheckboxes.length) {
-        if (selectAllCheckbox) selectAllCheckbox.checked = true;
-    } else {
-        if (selectAllCheckbox) selectAllCheckbox.checked = false;
-    }
+    if (badge)         badge.textContent        = count;
+    if (badgeDel)      badgeDel.textContent      = count;
+    if (modalBadge)    modalBadge.textContent    = count;
+    if (modalBadgeDel) modalBadgeDel.textContent = count;
 
-    // Populate hidden form inputs
-    if (hiddenInputsContainer) hiddenInputsContainer.innerHTML = '';
-    if (hiddenDelInputsContainer) hiddenDelInputsContainer.innerHTML = '';
-    
-    checked.forEach(cb => {
-        if (hiddenInputsContainer) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'pelanggan_ids[]';
-            input.value = cb.value;
-            hiddenInputsContainer.appendChild(input);
+    // — Hidden inputs untuk form —
+    const hiddenInv = document.getElementById('hiddenBulkInputs');
+    const hiddenDel = document.getElementById('hiddenBulkDeleteInputs');
+    if (hiddenInv) hiddenInv.innerHTML = '';
+    if (hiddenDel) hiddenDel.innerHTML = '';
+
+    selectedPelanggans.forEach((nama, id) => {
+        if (hiddenInv) {
+            const inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = 'pelanggan_ids[]'; inp.value = id;
+            hiddenInv.appendChild(inp);
         }
-        if (hiddenDelInputsContainer) {
-            const inputDel = document.createElement('input');
-            inputDel.type = 'hidden';
-            inputDel.name = 'pelanggan_ids[]';
-            inputDel.value = cb.value;
-            hiddenDelInputsContainer.appendChild(inputDel);
+        if (hiddenDel) {
+            const inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = 'pelanggan_ids[]'; inp.value = id;
+            hiddenDel.appendChild(inp);
         }
     });
+
+    // — Chip nama di modal invoice —
+    const namesList = document.getElementById('selectedNamesList');
+    if (namesList) {
+        namesList.innerHTML = '';
+        if (count === 0) {
+            namesList.innerHTML = '<span style="color:var(--text-4);font-size:12px;">Belum ada pelanggan yang dipilih.</span>';
+        } else {
+            selectedPelanggans.forEach((nama, id) => {
+                const chip = document.createElement('span');
+                chip.className = 'selected-chip';
+                chip.innerHTML = `${nama} <button type="button" title="Hapus dari pilihan" onclick="removePelanggan('${id}')"><i class="fas fa-xmark"></i></button>`;
+                namesList.appendChild(chip);
+            });
+        }
+    }
+
+    syncCheckboxesToDOM();
+}
+
+// Hapus satu pelanggan dari pilihan via klik X di chip
+function removePelanggan(id) {
+    selectedPelanggans.delete(id);
+    refreshBulkUI();
+}
+
+// Fungsi lama — dipanggil dari onchange checkbox di table (backward compat)
+function updateBulkGenerate() {
+    // Baca state DOM → update Map
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        const id   = cb.value;
+        const nama = cb.dataset.nama || id;
+        if (cb.checked) {
+            selectedPelanggans.set(id, nama);
+        } else {
+            selectedPelanggans.delete(id);
+        }
+    });
+    refreshBulkUI();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
-            rowCheckboxes.forEach(cb => cb.checked = this.checked);
-            updateBulkGenerate();
-        });
-    }
 
-    // -- Live Search & Filtering --
-    const filterForm = document.getElementById('filterForm');
-    const searchInput = document.getElementById('searchInput');
-    const statusFilter = document.getElementById('statusFilter');
-    const paketFilter = document.getElementById('paketFilter');
-    const nasFilter = document.getElementById('nasFilter');
+    // ── Live Search & Filtering ──
+    const filterForm    = document.getElementById('filterForm');
+    const searchInput   = document.getElementById('searchInput');
+    const statusFilter  = document.getElementById('statusFilter');
+    const paketFilter   = document.getElementById('paketFilter');
+    const nasFilter     = document.getElementById('nasFilter');
     const tableContainer = document.getElementById('tableContainer');
-    
-    // Sort states
-    const sortByInput = document.getElementById('sort_by');
-    const sortDirInput = document.getElementById('sort_dir');
-
-    // Debounce function
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    const sortByInput   = document.getElementById('sort_by');
+    const sortDirInput  = document.getElementById('sort_dir');
 
     let currentFetchController = null;
 
     // ── Fetch dengan dukungan halaman & query string ──
     const fetchPelanggans = (isAutoRefresh = false, pageOverride = null) => {
-        if (currentFetchController) {
-            currentFetchController.abort();
-        }
+        if (currentFetchController) currentFetchController.abort();
         currentFetchController = new AbortController();
         const signal = currentFetchController.signal;
 
         const formData = new FormData(filterForm);
-        const params = new URLSearchParams(formData);
+        const params   = new URLSearchParams(formData);
 
-        // Gunakan pageOverride jika ada, kalau tidak ambil dari hidden input
         const pageInput = document.getElementById('currentPage');
         if (pageOverride !== null) {
             params.set('page', pageOverride);
@@ -598,56 +649,44 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             params.set('page', pageInput ? pageInput.value : 1);
         }
+        params.set('_t', Date.now());
 
-        params.set('_t', new Date().getTime());
-        
-        // Ubah icon pencarian menjadi spinner hanya jika bukan dari auto-refresh
         if (!isAutoRefresh) {
-            const searchIcon = document.getElementById('searchIcon');
-            if (searchIcon) {
-                searchIcon.className = 'fas fa-spinner fa-spin';
-                searchIcon.style.color = '#60a5fa';
-            }
+            const si = document.getElementById('searchIcon');
+            if (si) { si.className = 'fas fa-spinner fa-spin'; si.style.color = '#60a5fa'; }
         }
-        
-        const fetchUrl = `${window.location.pathname}?${params.toString()}`;
 
-        fetch(fetchUrl, {
-            signal: signal,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
+        fetch(`${window.location.pathname}?${params}`, {
+            signal,
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
-        .then(async response => {
-            if (!response.ok) {
-                const text = await response.text().catch(() => '');
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
+        .then(async res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            return res.json();
         })
         .then(data => {
             if (data.html !== undefined) {
                 tableContainer.innerHTML = data.html;
-                updateBulkGenerate();
+
+                // Restore centang dari Map SEBELUM attachListeners agar event tidak dobel
+                syncCheckboxesToDOM();
+                refreshBulkUI();
+                attachCheckboxListeners();
                 attachSortListeners();
-                attachPaginationListeners(); // ← intercept link pagination baru
-                
+                attachPaginationListeners();
+
                 const totalText = document.querySelector('.toolbar-right .mono-mute');
                 if (totalText) totalText.textContent = (data.total ?? '') + ' data';
 
-                // Update URL di address bar tanpa reload
-                const newUrl = `${window.location.pathname}?${params.toString()}`;
-                history.replaceState(null, '', newUrl);
+                history.replaceState(null, '', `${window.location.pathname}?${params}`);
             }
         })
-        .catch(error => {
-            if (error.name === 'AbortError') return;
-            console.error('AJAX Error:', error);
-            // Tampilkan notif ringan di bawah tabel, bukan alert pop-up
+        .catch(err => {
+            if (err.name === 'AbortError') return;
+            console.error('AJAX Error:', err);
             const errDiv = document.getElementById('ajaxErrorMsg');
             if (errDiv) {
-                errDiv.textContent = 'Gagal memuat data: ' + error.message;
+                errDiv.textContent = 'Gagal memuat data: ' + err.message;
                 errDiv.style.display = 'block';
                 setTimeout(() => { errDiv.style.display = 'none'; }, 5000);
             }
@@ -655,11 +694,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => {
             if (signal.aborted) return;
             if (!isAutoRefresh) {
-                const searchIcon = document.getElementById('searchIcon');
-                if (searchIcon) {
-                    searchIcon.className = 'fas fa-magnifying-glass';
-                    searchIcon.style.color = '';
-                }
+                const si = document.getElementById('searchIcon');
+                if (si) { si.className = 'fas fa-magnifying-glass'; si.style.color = ''; }
             }
         });
     };
@@ -669,57 +705,92 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.pagination-wrapper a[href]').forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
-                const url = new URL(this.href);
-                const page = url.searchParams.get('page') || 1;
-                fetchPelanggans(false, parseInt(page));
+                const url  = new URL(this.href);
+                const page = parseInt(url.searchParams.get('page') || 1);
+                fetchPelanggans(false, page);
             });
         });
     }
 
-    if(searchInput) {
-        searchInput.addEventListener('input', function() {
-            // Reset ke halaman 1 setiap kali search berubah
-            const pageInput = document.getElementById('currentPage');
-            if (pageInput) pageInput.value = 1;
-            fetchPelanggans(false, 1);
+    // ── Attach checkbox listeners ke baris tabel yang baru di-render ──
+    function attachCheckboxListeners() {
+        // Checkbox per baris
+        document.querySelectorAll('.row-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const id   = this.value;
+                const nama = this.dataset.nama || id;
+                if (this.checked) {
+                    selectedPelanggans.set(id, nama);
+                } else {
+                    selectedPelanggans.delete(id);
+                }
+                refreshBulkUI();
+            });
         });
-    }
-    // Reset ke hal. 1 juga saat filter berubah
-    if(statusFilter) statusFilter.addEventListener('change', () => { const p = document.getElementById('currentPage'); if(p) p.value=1; fetchPelanggans(false, 1); });
-    if(paketFilter)  paketFilter.addEventListener('change',  () => { const p = document.getElementById('currentPage'); if(p) p.value=1; fetchPelanggans(false, 1); });
-    if(nasFilter)    nasFilter.addEventListener('change',    () => { const p = document.getElementById('currentPage'); if(p) p.value=1; fetchPelanggans(false, 1); });
 
-    if(filterForm) {
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            fetchPelanggans(false);
-        });
+        // Select All checkbox (header tabel)
+        const selectAll = document.getElementById('selectAllCheckbox');
+        if (selectAll) {
+            // Clone agar tidak dobel listener
+            const fresh = selectAll.cloneNode(true);
+            selectAll.parentNode.replaceChild(fresh, selectAll);
+            fresh.addEventListener('change', function() {
+                document.querySelectorAll('.row-checkbox').forEach(cb => {
+                    const id   = cb.value;
+                    const nama = cb.dataset.nama || id;
+                    if (this.checked) {
+                        selectedPelanggans.set(id, nama);
+                    } else {
+                        selectedPelanggans.delete(id);
+                    }
+                    cb.checked = this.checked;
+                });
+                refreshBulkUI();
+            });
+        }
     }
 
-    // Function to attach sort listeners to new HTML
+    // ── Sort listeners ──
     function attachSortListeners() {
         document.querySelectorAll('.sortable').forEach(el => {
             el.addEventListener('click', function(e) {
                 e.preventDefault();
                 const col = this.dataset.sort;
-                let currentDir = sortDirInput.value;
-                let currentSort = sortByInput.value;
-                
-                if (currentSort === col) {
-                    sortDirInput.value = currentDir === 'asc' ? 'desc' : 'asc';
+                if (sortByInput.value === col) {
+                    sortDirInput.value = sortDirInput.value === 'asc' ? 'desc' : 'asc';
                 } else {
-                    sortByInput.value = col;
+                    sortByInput.value  = col;
                     sortDirInput.value = 'asc';
                 }
-                
                 fetchPelanggans(false);
             });
         });
     }
+
+    // ── Search & filter events ──
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const p = document.getElementById('currentPage');
+            if (p) p.value = 1;
+            fetchPelanggans(false, 1);
+        });
+    }
+    const resetPage = () => { const p = document.getElementById('currentPage'); if(p) p.value=1; fetchPelanggans(false, 1); };
+    if (statusFilter) statusFilter.addEventListener('change', resetPage);
+    if (paketFilter)  paketFilter.addEventListener('change',  resetPage);
+    if (nasFilter)    nasFilter.addEventListener('change',    resetPage);
+
+    if (filterForm) {
+        filterForm.addEventListener('submit', e => { e.preventDefault(); fetchPelanggans(false); });
+    }
+
+    // ── Init ──
+    attachCheckboxListeners();
     attachSortListeners();
     attachPaginationListeners();
+    refreshBulkUI();
 
-    // Pesan error ringan (tidak pakai alert pop-up)
+    // Error div
     if (!document.getElementById('ajaxErrorMsg')) {
         const errDiv = document.createElement('div');
         errDiv.id = 'ajaxErrorMsg';
@@ -727,29 +798,18 @@ document.addEventListener('DOMContentLoaded', function() {
         tableContainer.parentNode.insertBefore(errDiv, tableContainer.nextSibling);
     }
 
-    // Auto-refresh data pelanggan setiap 10 detik
+    // ── Auto-refresh setiap 10 detik (stealth, tidak reset centangan) ──
     setInterval(function() {
-        // Jangan auto-refresh kalau sedang pilih checkbox (biar centangan ga ilang)
-        if (document.querySelectorAll('.row-checkbox:checked').length > 0) return;
-
-        // Cek apakah ada modal yang sedang terbuka (terlihat di layar)
-        let modals = document.querySelectorAll('.modal-overlay');
-        let isModalOpen = false;
-        for(let i = 0; i < modals.length; i++) {
-            if (modals[i].style.display !== 'none' && modals[i].style.display !== '') {
-                isModalOpen = true;
-                break;
-            }
-        }
-        
+        // Jangan refresh jika modal terbuka
+        let isModalOpen = [...document.querySelectorAll('.modal-overlay')]
+            .some(m => m.style.display !== 'none' && m.style.display !== '');
         if (isModalOpen) return;
 
-        // Auto-refresh: pakai halaman yang sedang aktif, bukan reset ke 1
         fetchPelanggans(true, null);
     }, 10000);
 
-    // Kalau ada ?page= di URL saat pertama load, pastikan hidden input sinkron
-    const urlPage = new URLSearchParams(window.location.search).get('page');
+    // Sinkronkan ?page= dari URL awal
+    const urlPage  = new URLSearchParams(window.location.search).get('page');
     const pageInput = document.getElementById('currentPage');
     if (urlPage && pageInput) pageInput.value = urlPage;
 });

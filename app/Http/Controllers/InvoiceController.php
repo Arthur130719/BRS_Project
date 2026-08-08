@@ -207,6 +207,9 @@ class InvoiceController extends Controller
                 'keterangan'      => 'Generate Massal',
             ]);
 
+            // ← FIX: Update expiry di tabel pelanggans agar kolom Jatuh Tempo ikut terupdate
+            $pelanggan->update(['expiry' => $validated['tgl_jatuh_tempo']]);
+
             Notifikasi::create([
                 'type'      => 'info',
                 'title'     => 'Invoice Baru: ' . $invoice->no_invoice,
