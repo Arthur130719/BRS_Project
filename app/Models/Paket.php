@@ -10,11 +10,12 @@ class Paket extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nama', 'mikrotik_profile', 'kecepatan_down', 'kecepatan_up', 'harga', 'deskripsi', 'is_active',
+        'nama', 'mikrotik_profile', 'kecepatan_down', 'kecepatan_up', 'harga', 'deskripsi', 'is_active', 'show_in_web',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'show_in_web' => 'boolean',
     ];
 
     public function pelanggans()

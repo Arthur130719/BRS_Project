@@ -52,6 +52,10 @@
               <label class="form-label">Deskripsi (opsional)</label>
               <input type="text" name="deskripsi" class="form-control" value="{{ old('deskripsi') }}" placeholder="Keterangan tambahan">
             </div>
+            <div class="form-group" style="margin-top:12px; display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" name="show_in_web" id="show_in_web_create" checked style="width:16px; height:16px; cursor:pointer;">
+              <label for="show_in_web_create" style="margin:0; font-size:13px; color:var(--text-2); cursor:pointer;">Tampilkan di Web Pelanggan</label>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-ghost" @click="open=false">Batal</button>
@@ -71,9 +75,14 @@
         <div class="card-title">{{ $paket->nama }}</div>
         <div class="card-subtitle">{{ $paket->pelanggans_count }} pelanggan aktif</div>
       </div>
-      <span class="badge {{ $paket->is_active ? 'badge-active' : 'badge-inactive' }}">
-        {{ $paket->is_active ? 'Aktif' : 'Nonaktif' }}
-      </span>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+        <span class="badge {{ $paket->is_active ? 'badge-active' : 'badge-inactive' }}">
+          {{ $paket->is_active ? 'Aktif' : 'Nonaktif' }}
+        </span>
+        <span style="font-size:11px; font-weight:600; padding:2px 6px; border-radius:4px; background:{{ $paket->show_in_web ? 'rgba(14,165,233,0.1)' : 'rgba(156,163,175,0.1)' }}; color:{{ $paket->show_in_web ? 'var(--sky)' : 'var(--text-4)' }};" title="{{ $paket->show_in_web ? 'Tampil di Web Pelanggan' : 'Sembunyi dari Web Pelanggan' }}">
+          <i class="fas {{ $paket->show_in_web ? 'fa-eye' : 'fa-eye-slash' }}"></i> Web
+        </span>
+      </div>
     </div>
     <div class="card-body">
       <div style="font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:var(--text-1); margin-bottom:4px;">
@@ -147,6 +156,10 @@
                 <option value="1" {{ $paket->is_active?'selected':'' }}>Aktif</option>
                 <option value="0" {{ !$paket->is_active?'selected':'' }}>Nonaktif</option>
               </select>
+            </div>
+            <div class="form-group" style="margin-top:12px; display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" name="show_in_web" id="show_in_web_edit_{{ $paket->id }}" {{ $paket->show_in_web ? 'checked' : '' }} style="width:16px; height:16px; cursor:pointer;">
+              <label for="show_in_web_edit_{{ $paket->id }}" style="margin:0; font-size:13px; color:var(--text-2); cursor:pointer;">Tampilkan di Web Pelanggan</label>
             </div>
           </div>
           <div class="modal-footer">

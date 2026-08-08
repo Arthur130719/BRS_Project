@@ -22,7 +22,9 @@ class PaketController extends Controller
             'kecepatan_up'   => 'required|integer|min:1',
             'harga'          => 'required|numeric|min:0',
             'deskripsi'      => 'nullable|max:255',
+            'show_in_web'    => 'boolean',
         ]);
+        $validated['show_in_web'] = $request->has('show_in_web');
         Paket::create($validated);
         return redirect()->route('paket.index')->with('success', 'Paket berhasil ditambahkan.');
     }
@@ -37,7 +39,10 @@ class PaketController extends Controller
             'harga'          => 'required|numeric|min:0',
             'deskripsi'      => 'nullable|max:255',
             'is_active'      => 'boolean',
+            'show_in_web'    => 'boolean',
         ]);
+        $validated['is_active'] = $request->has('is_active');
+        $validated['show_in_web'] = $request->has('show_in_web');
         $paket->update($validated);
         return redirect()->route('paket.index')->with('success', 'Paket berhasil diperbarui.');
     }
