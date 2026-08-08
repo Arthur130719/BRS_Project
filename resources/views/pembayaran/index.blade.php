@@ -37,12 +37,23 @@
     <div class="card-body">
         @php
             $rekeningBanks = json_decode(\App\Models\SystemSetting::get('rekening_banks', '[]'), true);
+            
+            $totalByMetode = [];
+            foreach ($totalPerBank as $row) {
+                $totalByMetode[$row->metode] = $row->total;
+            }
         @endphp
         
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
             @forelse($rekeningBanks as $rek)
                 @php
-                    $bankName = strtolower($rek['bank'] ?? '');
+                    $bankNameStr = $rek['bank'] ?? 'Bank';
+                    $bankName = strtolower($bankNameStr);
+                    $an = $rek['an'] ?? '';
+                    
+                    $metodeLabel = "Transfer $bankNameStr" . ($an ? " (a.n $an)" : "");
+                    $totalMasuk = $totalByMetode[$metodeLabel] ?? 0;
+                    
                     if (str_contains($bankName, 'bca')) {
                         $color = '#0066AE'; // BCA Blue
                         $icon = 'fa-building-columns';
@@ -73,6 +84,11 @@
                     </div>
                     <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);letter-spacing:1px;">{{ $rek['norek'] ?? '-' }}</div>
                     <div style="font-size:12px;color:var(--text-1);"><span style="color:var(--text-3);">a.n</span> {{ $rek['an'] ?? '-' }}</div>
+                    
+                    <div style="margin-top:4px;padding-top:10px;border-top:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:11px;color:var(--text-3);font-weight:500;">Total Diterima</div>
+                        <div class="mono" style="font-size:13px;font-weight:700;color:var(--text-1);">Rp {{ number_format($totalMasuk, 0, ',', '.') }}</div>
+                    </div>
                 </div>
             @empty
                 <div style="padding:15px;color:var(--text-3);font-size:13px;border:1px dashed var(--border);border-radius:8px;text-align:center;">
