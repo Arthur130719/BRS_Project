@@ -155,8 +155,8 @@
                     <i class="fas fa-money-bill" style="color:var(--green);font-size:13px;"></i>
                 </div>
             </div>
-            <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);">{{ $fmt($totalCash) }}</div>
-            <div style="font-size:11px;color:var(--text-4);">Pembayaran tunai langsung</div>
+            <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);">{{ $fmt($totalCashBulanIni) }}</div>
+            <div style="font-size:11px;color:var(--text-4);">Pembayaran tunai langsung (Bulan Ini)</div>
         </div>
 
         {{-- Total Transfer per Bank --}}
@@ -202,8 +202,8 @@
                     <i class="fas fa-building-columns" style="color:var(--sky);font-size:13px;"></i>
                 </div>
             </div>
-            <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);">{{ $fmt($totalTransferAll) }}</div>
-            <div style="font-size:11px;color:var(--text-4);">Gabungan semua rekening bank</div>
+            <div class="mono" style="font-size:22px;font-weight:700;color:var(--text-1);">{{ $fmt($totalTransferAllBulanIni) }}</div>
+            <div style="font-size:11px;color:var(--text-4);">Gabungan semua rekening bank (Bulan Ini)</div>
         </div>
 
         {{-- Grand Total --}}
@@ -219,8 +219,11 @@
                     <i class="fas fa-sack-dollar" style="color:var(--indigo);font-size:13px;"></i>
                 </div>
             </div>
-            <div class="mono" style="font-size:26px;font-weight:700;color:var(--text-1);letter-spacing:-0.5px;">{{ $fmt($grandTotal) }}</div>
-            <div style="font-size:11px;color:var(--text-4);">Cash + Semua Transfer</div>
+            <div class="mono" style="font-size:26px;font-weight:700;color:var(--text-1);letter-spacing:-0.5px;">{{ $fmt($grandTotalBulanIni) }}</div>
+            <div style="font-size:11px;color:var(--text-1);display:flex;justify-content:space-between;margin-top:2px;">
+                <span>Total Keseluruhan (All Time):</span>
+                <span class="mono" style="font-weight:700;">{{ $fmt($grandTotalKeseluruhan) }}</span>
+            </div>
         </div>
 
     </div>
@@ -249,6 +252,24 @@
                            placeholder="No Invoice / Pelanggan..."
                            value="{{ request('search') }}">
                 </div>
+                
+                {{-- Filter Bulan & Tahun --}}
+                <select name="bulan" class="form-control form-control-mono" style="width:110px;height:32px;padding:0 8px;font-size:12px;">
+                    @php
+                        $months = ['01'=>'Januari','02'=>'Februari','03'=>'Maret','04'=>'April','05'=>'Mei','06'=>'Juni',
+                                   '07'=>'Juli','08'=>'Agustus','09'=>'September','10'=>'Oktober','11'=>'November','12'=>'Desember'];
+                    @endphp
+                    @foreach($months as $num => $name)
+                        <option value="{{ $num }}" {{ $bulan == $num ? 'selected' : '' }}>{{ $name }}</option>
+                    @endforeach
+                </select>
+                <select name="tahun" class="form-control form-control-mono" style="width:80px;height:32px;padding:0 8px;font-size:12px;">
+                    @php $currY = date('Y'); @endphp
+                    @foreach(range($currY - 2, $currY + 1) as $y)
+                        <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}</option>
+                    @endforeach
+                </select>
+
                 @php
                     $rekeningBanks = json_decode(\App\Models\SystemSetting::get('rekening_banks', '[]'), true);
                 @endphp

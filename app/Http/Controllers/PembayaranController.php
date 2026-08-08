@@ -12,6 +12,7 @@ class PembayaranController extends Controller
     {
         $query = Pembayaran::with(['invoice.pelanggan', 'user']);
 
+        // Filter by Search
         if ($request->filled('search')) {
             $s = $request->search;
             $query->whereHas('invoice', function ($q) use ($s) {
@@ -20,17 +21,33 @@ class PembayaranController extends Controller
             });
         }
 
+        // Filter by Metode
         if ($request->filled('metode')) {
             $query->where('metode', $request->metode);
         }
 
-        // ── Summary totals (tanpa filter, dari seluruh data) ──
-        $summaryQuery = Pembayaran::query();
-        $totalCash        = (clone $summaryQuery)->where('metode', 'cash')->sum('nominal');
-        $totalTransferAll = (clone $summaryQuery)->where('metode', '!=', 'cash')->sum('nominal');
-        $grandTotal       = (clone $summaryQuery)->sum('nominal');
+        // Filter by Bulan & Tahun (default to current month/year if not specified and not searching)
+        $bulan = $request->input('bulan', date('m'));
+        $tahun = $request->input('tahun', date('Y'));
+        
+        // Apply month/year filter
+        if ($bulan) {
+            $query->whereMonth('tgl_bayar', $bulan);
+        }
+        if ($tahun) {
+            $query->whereYear('tgl_bayar', $tahun);
+        }
 
-        // Total per rekening bank (grouped by metode label)
+        // ── Summary totals (Bulan Ini / Filtered) ──
+        $summaryQuery = clone $query;
+        // Remove eager loading for summary queries to optimize
+        $summaryQuery->setEagerLoads([]); 
+        
+        $totalCashBulanIni        = (clone $summaryQuery)->where('metode', 'cash')->sum('nominal');
+        $totalTransferAllBulanIni = (clone $summaryQuery)->where('metode', '!=', 'cash')->sum('nominal');
+        $grandTotalBulanIni       = (clone $summaryQuery)->sum('nominal');
+
+        // Total per rekening bank (Bulan Ini)
         $totalPerBank = (clone $summaryQuery)
             ->where('metode', '!=', 'cash')
             ->selectRaw('metode, nama_bank, SUM(nominal) as total')
@@ -38,14 +55,20 @@ class PembayaranController extends Controller
             ->orderBy('metode')
             ->get();
 
-        $pembayarans = $query->latest()->paginate(20)->withQueryString();
+        // ── Grand Total Seluruh Waktu (Unfiltered) ──
+        $grandTotalKeseluruhan = Pembayaran::sum('nominal');
+
+        $pembayarans = $query->latest('tgl_bayar')->latest('id')->paginate(20)->withQueryString();
 
         return view('pembayaran.index', compact(
             'pembayarans',
-            'totalCash',
-            'totalTransferAll',
-            'grandTotal',
-            'totalPerBank'
+            'totalCashBulanIni',
+            'totalTransferAllBulanIni',
+            'grandTotalBulanIni',
+            'grandTotalKeseluruhan',
+            'totalPerBank',
+            'bulan',
+            'tahun'
         ));
     }
 
